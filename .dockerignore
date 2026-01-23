@@ -1,0 +1,87 @@
+# 依赖目录
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# 构建输出
+dist/
+.output/
+.nuxt/
+.next/
+.vuepress/dist/
+
+# 缓存目录
+.cache/
+.parcel-cache/
+.npm/
+.eslintcache/
+.stylelintcache/
+
+# 环境文件
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# 日志文件
+logs/
+*.log
+
+# 运行时数据
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# 覆盖率目录
+coverage/
+*.lcov
+.nyc_output/
+
+# IDE和编辑器
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 操作系统
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# 临时文件
+*.tmp
+*.temp
+
+# 测试相关
+.jest/
+__tests__/
+
+# Linting
+.eslintrc*
+.prettierrc*
+
+# 文档
+README.md
+*.md
+
+# Docker相关
+Dockerfile*
+.dockerignore
+docker-compose*
+
+# 其他构建工具
+.editorconfig
+.browserslistrc

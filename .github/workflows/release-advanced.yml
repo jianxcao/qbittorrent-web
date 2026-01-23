@@ -1,0 +1,173 @@
+name: Advanced Release
+
+on:
+  push:
+    tags:
+      - 'v*' # 当推送以 v 开头的标签时触发
+  workflow_dispatch: # 允许手动触发
+    inputs:
+      version:
+        description: 'Version to release'
+        required: true
+        default: '1.0.0'
+
+env:
+  NODE_VERSION: '24'
+  PNPM_VERSION: '10'
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+      issues: write
+      pull-requests: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # 获取完整的 Git 历史用于生成变更日志
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run type check
+        run: pnpm run check
+
+      - name: Build project
+        run: pnpm run build
+        env:
+          VITE_BASE_URL: /qbittorrent/web
+
+      - name: Verify build output
+        run: |
+          if [ ! -d "dist" ]; then
+            echo "❌ Build failed: dist directory not found"
+            exit 1
+          fi
+          echo "✅ Build output verified"
+
+      - name: Create release archive
+        run: |
+          # 获取版本号
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION=${GITHUB_REF#refs/tags/}
+          fi
+
+          echo "Creating release for version: $VERSION"
+
+          # 创建压缩包（不包含 dist 目录）
+          cd dist
+          zip -r "../qbittorrent-web-${VERSION}.zip" .
+          cd ..
+
+          # 验证压缩包
+          if [ ! -f "qbittorrent-web-${VERSION}.zip" ]; then
+            echo "❌ Archive creation failed"
+            exit 1
+          fi
+
+          echo "✅ Archive created: qbittorrent-web-${VERSION}.zip"
+
+      - name: Generate release notes
+        id: release_notes
+        run: |
+          # 获取版本号
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION=${GITHUB_REF#refs/tags/}
+          fi
+
+          # 生成变更日志
+          if [ "${{ github.event_name }}" = "push" ]; then
+            # 获取上一个标签
+            PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD~1 2>/dev/null || echo "")
+
+            if [ -n "$PREVIOUS_TAG" ]; then
+              CHANGELOG=$(git log --pretty=format:"- %s" ${PREVIOUS_TAG}..HEAD)
+            else
+              CHANGELOG=$(git log --pretty=format:"- %s" --reverse)
+            fi
+          else
+            CHANGELOG="- 手动发布版本"
+          fi
+
+          # 创建 release notes
+          cat > release_notes.md << EOF
+          ## 版本 $VERSION 发布
+
+          ### 更新内容
+          $CHANGELOG
+
+          ### 下载
+          - 完整包: qbittorrent-web-${VERSION}.zip
+
+          ### 构建信息
+          - 构建时间: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          - 提交: ${{ github.sha }}
+          - 分支: ${{ github.ref }}
+          EOF
+
+          # 输出到 GitHub Actions
+          echo "notes<<EOF" >> $GITHUB_OUTPUT
+          cat release_notes.md >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: qbittorrent-web-*.zip
+          body: ${{ steps.release_notes.outputs.notes }}
+          draft: false
+          prerelease: ${{ contains(github.ref, '-') }}
+          generate_release_notes: false # 使用我们自定义的 release notes
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts-${{ github.run_number }}
+          path: |
+            dist/
+            qbittorrent-web-*.zip
+          retention-days: 30
+
+      - name: Notify success
+        if: success()
+        run: |
+          echo "🎉 Release $VERSION created successfully!"
+          echo "📦 Archive: qbittorrent-web-${VERSION}.zip"
+          echo "🔗 Release URL: https://github.com/${{ github.repository }}/releases/tag/$VERSION"
+
+      - name: Notify failure
+        if: failure()
+        run: |
+          echo "❌ Release failed!"
+          echo "Please check the build logs for more information."

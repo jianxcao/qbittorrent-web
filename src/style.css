@@ -1,0 +1,114 @@
+a {
+  font-weight: 500;
+  color: #646cff;
+  text-decoration: inherit;
+}
+
+a:hover {
+  color: #535bf2;
+}
+
+:root {
+  --top-inset: env(safe-area-inset-top);
+  --bottom-inset: env(safe-area-inset-bottom);
+
+}
+
+body {
+  margin: 0;
+  height: 100%;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
+}
+
+button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: #1a1a1a;
+  cursor: pointer;
+  transition: border-color 0.25s;
+}
+
+button:hover {
+  border-color: #646cff;
+}
+
+button:focus,
+button:focus-visible {
+  outline: 4px auto -webkit-focus-ring-color;
+}
+
+.card {
+  padding: 2em;
+}
+
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color: #213547;
+    background-color: #ffffff;
+  }
+
+  a:hover {
+    color: #747bff;
+  }
+
+  button {
+    background-color: #f9f9f9;
+  }
+}
+
+/* 仅鼠标点击时隐藏，Tab 键导航时保留 */
+/* :focus:not(:focus-visible) {
+  outline: none;
+  box-shadow: none;
+} */
+
+button:focus {
+  outline: none;
+}
+
+.n-message-container {
+  padding-top: var(--top-inset);
+  padding-bottom: var(--bottom-inset);
+}
+
+
+@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+
+  .n-popover:not(.n-popover--raw),
+  .n-dropdown-menu {
+    background-color: color-mix(in srgb, var(--n-color) 35%, transparent);
+    position: relative;
+    -webkit-backdrop-filter: blur(10px) brightness(95%);
+    backdrop-filter: blur(10px) brightness(95%);
+  }
+  [data-theme="light"] {
+    .n-popover:not(.n-popover--raw),
+    .n-dropdown-menu {
+      background-color: color-mix(in srgb, var(--n-color) 50%, transparent);
+    }
+  }
+  .n-dialog {
+    background-color: color-mix(in srgb, var(--n-color) 35%, transparent);
+    -webkit-backdrop-filter: blur(15px) brightness(95%);
+    backdrop-filter: blur(15px) brightness(95%);
+  }
+
+  [data-theme="light"] {
+    .n-dialog {
+      background-color: color-mix(in srgb, var(--n-color) 65%, transparent);
+      -webkit-backdrop-filter: blur(15px) brightness(95%);
+      backdrop-filter: blur(15px) brightness(95%);
+    }
+  }
+}

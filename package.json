@@ -1,0 +1,112 @@
+{
+  "name": "qb-web",
+  "version": "0.0.5",
+  "description": "🚀 现代化的 qb BitTorrent 客户端 Web 界面，基于 Vue 3 + TypeScript 构建，支持响应式设计、虚拟滚动和智能过滤功能",
+  "type": "module",
+  "keywords": [
+    "vue3",
+    "typescript",
+    "qb",
+    "bittorrent",
+    "torrent",
+    "download-manager",
+    "naive-ui",
+    "vite",
+    "pinia",
+    "responsive-design",
+    "web-interface",
+    "vue-composition-api",
+    "virtual-scrolling",
+    "torrent-client",
+    "p2p",
+    "modern-ui"
+  ],
+  "homepage": "https://github.com/jianxcao/qb-web",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jianxcao/qb-web.git"
+  },
+  "bugs": {
+    "url": "https://github.com/jianxcao/qb-web/issues"
+  },
+  "license": "MIT",
+  "author": "Jianxiong Cao <jianxiong.cao@example.com>",
+  "scripts": {
+    "dev": "vite",
+    "check": "vue-tsc -b",
+    "build": "vue-tsc -b && vite build",
+    "preview": "vite preview",
+    "lint": "eslint . --ext .ts,.vue --fix",
+    "lint:fix": "eslint . --ext .ts,.vue --fix",
+    "release": "bash scripts/release-github.sh",
+    "release:check": "bash scripts/check-env.sh",
+    "build:prod": "bash scripts/build.sh"
+  },
+  "dependencies": {
+    "@any-touch/vue3": "^2.2.0",
+    "@leafer-ui/core": "^1.12.4",
+    "@leafer-ui/draw": "^1.12.4",
+    "@unocss/preset-attributify": "^66.6.0",
+    "@unocss/preset-icons": "^66.6.0",
+    "@unocss/preset-uno": "^66.6.0",
+    "@unocss/vite": "^66.6.0",
+    "@vicons/ionicons5": "^0.13.0",
+    "@vueuse/core": "^13.9.0",
+    "any-touch": "^2.2.0",
+    "autoprefixer": "^10.4.23",
+    "axios": "^1.13.2",
+    "dayjs": "^1.11.19",
+    "i": "^0.3.7",
+    "leafer-ui": "^1.12.4",
+    "less": "^4.5.1",
+    "lodash-es": "^4.17.23",
+    "naive-ui": "^2.43.2",
+    "parse-torrent": "^11.0.19",
+    "pinia": "^3.0.4",
+    "postcss": "^8.5.6",
+    "seemly": "^0.3.10",
+    "tailwindcss": "^4.1.18",
+    "unocss": "^66.6.0",
+    "vue": "^3.5.27",
+    "vue-i18n": "^9.14.5",
+    "vue-router": "^4.6.4",
+    "vue-virtual-scroller": "2.0.0-beta.8",
+    "vuedraggable": "^4.1.0"
+  },
+  "devDependencies": {
+    "@types/lodash-es": "^4.17.12",
+    "@types/node": "^24.10.9",
+    "@types/parse-torrent": "^5.8.8",
+    "@typescript-eslint/eslint-plugin": "^8.53.1",
+    "@typescript-eslint/parser": "^8.53.1",
+    "@unocss/postcss": "^66.6.0",
+    "@unocss/preset-wind4": "^66.6.0",
+    "@unocss/transformer-directives": "^66.6.0",
+    "@vitejs/plugin-vue": "^6.0.3",
+    "@vue/eslint-config-prettier": "^10.2.0",
+    "@vue/eslint-config-typescript": "^14.6.0",
+    "@vue/tsconfig": "^0.7.0",
+    "eslint": "^9.39.2",
+    "eslint-plugin-oxlint": "^1.41.0",
+    "eslint-plugin-vue": "^10.7.0",
+    "prettier": "^3.8.1",
+    "prettier-eslint": "^16.4.2",
+    "skip-formatting": "link:@vue/eslint-config-prettier/skip-formatting",
+    "typescript": "~5.8.3",
+    "unplugin-auto-import": "^19.3.0",
+    "unplugin-vue-components": "^28.8.0",
+    "vfonts": "^0.1.0",
+    "vite": "npm:rolldown-vite@^7.3.1",
+    "vite-svg-loader": "^5.1.0",
+    "vue-tsc": "^2.2.12"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=10.0.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "vite": "npm:rolldown-vite@latest"
+    }
+  }
+}
