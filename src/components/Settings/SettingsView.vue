@@ -83,15 +83,6 @@ import { useSettingStore } from '@/store'
 import { useIsSmallScreen } from '@/composables/useIsSmallScreen'
 import { useMessage } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
-import Behavior from './Behavior.vue'
-import Downloads from './Downloads.vue'
-import Connection from './Connection.vue'
-import Speed from './Speed.vue'
-import BitTorrent from './BitTorrent.vue'
-import WebUI from './WebUI.vue'
-import TagsAndCategories from './TagsAndCategories.vue'
-import Advanced from './Advanced.vue'
-
 interface Props {
   activeTab?: string
 }
@@ -127,11 +118,14 @@ const scrollbarStyle = computed(() => {
 })
 
 // 监听 activeTab prop 变化
-watch(() => props.activeTab, (newTab) => {
-  if (newTab) {
-    activeTabValue.value = newTab
+watch(
+  () => props.activeTab,
+  (newTab) => {
+    if (newTab) {
+      activeTabValue.value = newTab
+    }
   }
-})
+)
 
 // 在组件加载时获取 preferences
 onMounted(async () => {
