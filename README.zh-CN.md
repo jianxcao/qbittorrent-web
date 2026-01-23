@@ -26,6 +26,14 @@
 - ⚙️ **全面设置** - 完整控制 qBittorrent 客户端设置
 - 🐳 **Docker 支持** - 使用 Docker 和 Docker Compose 轻松部署
 
+## 界面预览
+
+![面板](./docs/imgs/dashborad.png)
+![移动端卡片](./docs/imgs/mobileCard.png)
+![移动端面板](./docs/imgs/mobileDashborad.png)
+![移动端菜单](./docs/imgs/mobileSiderbar.png)
+![添加种子](./docs/imgs/add.png)
+
 ## 🐳 Docker 部署（推荐）
 
 最简单的部署方式是使用 Docker Hub 上预构建的镜像。

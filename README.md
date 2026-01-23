@@ -26,6 +26,14 @@ A modern, feature-rich web interface for qBittorrent client management, built wi
 - ⚙️ **Comprehensive Settings** - Full control over qBittorrent client settings
 - 🐳 **Docker Support** - Easy deployment with Docker and Docker Compose
 
+## Interface Preview
+
+![Dashboard](./docs/imgs/dashborad.png)
+![Mobile Card](./docs/imgs/mobileCard.png)
+![Mobile Dashboard](./docs/imgs/mobileDashborad.png)
+![Mobile Sidebar](./docs/imgs/mobileSiderbar.png)
+![Add Torrent](./docs/imgs/add.png)
+
 ## 🐳 Docker Deployment (Recommended)
 
 The easiest way to deploy qb-web is using the pre-built Docker image from Docker Hub.
