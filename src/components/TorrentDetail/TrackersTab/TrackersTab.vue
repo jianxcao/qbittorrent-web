@@ -7,6 +7,7 @@
       row-key="url"
       selectable
       class="flex-1"
+      :min-table-width="1000"
       @row-contextmenu="onRowContextMenu"
     />
     <TrackerContextMenu ref="contextMenuRef" />

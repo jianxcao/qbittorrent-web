@@ -66,6 +66,7 @@ const props = withDefaults(
     selectable?: boolean
     selectOnRowClick?: boolean
     maxColumnWidth?: number
+    minTableWidth?: number
     enableShiftSelect?: boolean
   }>(),
   {
@@ -100,11 +101,12 @@ const columnWidths = ref<number[]>([])
 const manualWidthKeys = ref<Set<string>>(new Set())
 
 watch(
-  () => [props.columns, tableWidth.value] as const,
-  ([cols, width]) => {
+  () => [props.columns, tableWidth.value, props.minTableWidth] as const,
+  ([cols, width, minTableWidth]) => {
     const minWidths = cols.map((column) => getMinWidth(column))
     const selectionWidth = props.selectable ? 40 : 0
-    const availableWidth = Math.max(0, (width || 0) - selectionWidth)
+    const effectiveWidth = minTableWidth && minTableWidth > 0 ? Math.max(width || 0, minTableWidth) : width || 0
+    const availableWidth = Math.max(0, effectiveWidth - selectionWidth)
 
     const nextWidths: number[] = new Array(cols.length).fill(0)
     const pendingIndexes: number[] = []
@@ -133,7 +135,7 @@ watch(
 
     pendingIndexes.forEach((index) => {
       const minWidth = minWidths[index]
-      const baseWidth = width ? Math.max(minWidth, shareWidth) : Math.max(minWidth, 160)
+      const baseWidth = effectiveWidth ? Math.max(minWidth, shareWidth) : Math.max(minWidth, 160)
       nextWidths[index] = baseWidth
     })
 
@@ -153,7 +155,13 @@ const gridTemplateColumns = computed(() => {
 const tableMinWidth = computed(() => {
   const selectionWidth = props.selectable ? 40 : 0
   const columnsWidth = columnWidths.value.reduce((total, width) => total + width, 0)
-  return selectionWidth + columnsWidth
+  const calculatedWidth = selectionWidth + columnsWidth
+
+  if (props.minTableWidth && props.minTableWidth > 0) {
+    return Math.max(calculatedWidth, props.minTableWidth)
+  }
+
+  return calculatedWidth
 })
 
 const maxColumnWidth = computed(() => {

@@ -6,6 +6,7 @@
       :row-key="(row: TorrentFile) => row.index"
       class="flex-1"
       @row-contextmenu="handleContextMenu"
+      :min-table-width="1000"
     />
     <n-dropdown
       placement="bottom-start"

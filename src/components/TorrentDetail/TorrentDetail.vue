@@ -1,5 +1,5 @@
 <template>
-  <div class="torrent-detail" :style="detailStyle">
+  <n-el class="torrent-detail" :style="detailStyle">
     <n-tabs
       v-model:value="activeTab"
       type="card"
@@ -24,7 +24,7 @@
         <ContentTab />
       </n-tab-pane>
     </n-tabs>
-  </div>
+  </n-el>
 </template>
 
 <script setup lang="ts">
@@ -50,9 +50,6 @@ const activeTab = computed({
 
 <style lang="less" scoped>
 .torrent-detail {
-  background-color: var(--n-color);
-  border-top: 1px solid var(--n-border-color);
-
   :deep(.n-tabs-pane-wrapper) {
     height: 100%;
     overflow: hidden;

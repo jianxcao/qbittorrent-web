@@ -1,6 +1,6 @@
 <template>
   <div class="http-sources-tab h-full flex flex-col">
-    <ResizableGridTable :columns="columns" :data="webSeeds" class="flex-1" />
+    <ResizableGridTable :columns="columns" :data="webSeeds" class="flex-1" :min-table-width="1000" />
   </div>
 </template>
 
