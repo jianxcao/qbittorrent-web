@@ -47,6 +47,9 @@ importers:
       axios:
         specifier: ^1.13.2
         version: 1.13.2
+      colord:
+        specifier: ^2.9.3
+        version: 2.9.3
       dayjs:
         specifier: ^1.11.19
         version: 1.11.19
@@ -166,7 +169,7 @@ importers:
         specifier: ^0.1.0
         version: 0.1.0
       vite:
-        specifier: npm:rolldown-vite@^7.3.1
+        specifier: npm:rolldown-vite@latest
         version: rolldown-vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(less@4.5.1)
       vite-svg-loader:
         specifier: ^5.1.0
@@ -1137,6 +1140,9 @@ packages:
 
   color-name@1.1.4:
     resolution: {integrity: sha512-dOy+3AuW3a2wNbZHIuMZpTcgjGuLU/uBL/ubcZF9OXbDo8ff4O8yVp5Bf0efS8uEoYo5q4Fx7dY9OgQGXgAsQA==}
+
+  colord@2.9.3:
+    resolution: {integrity: sha512-jeC1axXpnb0/2nn/Y1LPuLdgXBLH7aDcHu4KEKfqw3CUhX7ZpfBSlPKyqXE6btIgEzfWtrX3/tyBCaCvXvMkOw==}
 
   colorette@2.0.20:
     resolution: {integrity: sha512-IfEDxwoWIjkeXL1eXcDiow4UbKjhLdq6/EuSVR9GMN7KVH3r9gQ83e73hsz1Nd1T3ijd5xv1wcWRYO+D6kCI2w==}
@@ -3794,6 +3800,8 @@ snapshots:
       color-name: 1.1.4
 
   color-name@1.1.4: {}
+
+  colord@2.9.3: {}
 
   colorette@2.0.20: {}
 

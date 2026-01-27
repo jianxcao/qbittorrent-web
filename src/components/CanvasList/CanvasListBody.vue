@@ -11,16 +11,22 @@
 </template>
 
 <script setup lang="ts">
-import { Leafer, Rect, Group } from 'leafer-ui'
-import { useTorrentStore, useSettingStore } from '@/store'
+import { useSettingStore, useTorrentStore } from '@/store'
 import { useToolbarStore } from '@/store/toolbarStore'
-import { useRowMenuStore } from './useRowMenuStore'
-import { getCellRenderer } from './renderers'
-import type { CellRenderContext } from './types'
-import { onKeyStroke, useElementSize } from '@vueuse/core'
 import { isMac } from '@/utils'
+import { onKeyStroke, useElementSize } from '@vueuse/core'
+import { colord, extend } from 'colord'
+import mixPlugin from 'colord/plugins/mix'
+import { Group, Leafer, Rect } from 'leafer-ui'
 import RowMenu from './RowMenu.vue'
 import { BUFFER_SIZE, CHECKBOX_WIDTH, ROW_HEIGHT } from './constant'
+import { getCellRenderer } from './renderers'
+import type { CellRenderContext } from './types'
+import { useRowMenuStore } from './useRowMenuStore'
+// 扩展 colord 支持混合功能
+extend([mixPlugin])
+
+const themeMode = computed(() => settingStore.setting.theme)
 
 const props = defineProps<{
   listHeight: number
@@ -117,27 +123,32 @@ watch(
   { deep: true }
 )
 
+const tableColors = computed(() => {
+  const theme = settingStore.themeVars
+  const mixedColor = themeMode.value === 'dark' ? '#ffffff00' : '#00000000'
+  const oddColor = colord(theme.tableColorStriped).mix(mixedColor, 0.5).toRgbString()
+  const mixedSelectedColor = themeMode.value === 'dark' ? '#00000000' : '#ffffff00'
+  const selectedBgColor = colord(theme.primaryColor).mix(mixedSelectedColor, 0.3).toRgbString()
+  return {
+    selectedBgColor,
+    oddColor
+  }
+})
+
 function getRowBgColors(params: { isSelected: boolean; isHover: boolean; isEven: boolean; theme: any }) {
   const { isSelected, isHover, isEven, theme } = params
 
   // scroll 区域保持原逻辑：选中/条纹使用半透明叠加
   let scrollBgColor: string | undefined = undefined
   if (isSelected) {
-    scrollBgColor = `color-mix(in srgb, ${theme.primaryColor} 50%, transparent)`
+    // scrollBgColor = `color-mix(in srgb, ${theme.primaryColor} 50%, transparent)`
+    scrollBgColor = tableColors.value.selectedBgColor
   } else if (isHover) {
     scrollBgColor = theme.tableColorHover
   } else if (isEven) {
-    scrollBgColor = `color-mix(in srgb, ${theme.tableColorStriped} 50%, transparent)`
+    // scrollBgColor = `color-mix(in srgb, ${theme.tableColorStriped} 50%, transparent)`
+    scrollBgColor = tableColors.value.oddColor
   }
-
-  // let stickyBgColor: string = theme.tableColor
-  // if (isSelected) {
-  //   stickyBgColor = theme.tableColor
-  // } else if (isHover) {
-  //   stickyBgColor = theme.tableColorHover
-  // } else if (isEven) {
-  //   stickyBgColor = theme.tableColorStriped
-  // }
   return { scrollBgColor, stickyBgColor: scrollBgColor }
 }
 

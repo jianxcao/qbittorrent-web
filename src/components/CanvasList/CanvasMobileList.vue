@@ -15,15 +15,22 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
-import { Leafer, Rect, Group } from 'leafer-ui'
-import { useTorrentStore, useSettingStore } from '@/store'
+import { useSettingStore, useTorrentStore } from '@/store'
 import { useToolbarStore } from '@/store/toolbarStore'
-import { useRowMenuStore } from './useRowMenuStore'
 import { useElementSize } from '@vueuse/core'
-import ToolbarView from './ToolbarView.vue'
+import { colord, extend } from 'colord'
+import mixPlugin from 'colord/plugins/mix'
+import { Group, Leafer, Rect } from 'leafer-ui'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import RowMenu from './RowMenu.vue'
+import ToolbarView from './ToolbarView.vue'
 import { mobileCellRenderers } from './mobileCells'
+import { useRowMenuStore } from './useRowMenuStore'
+
+// 扩展 colord 支持混合功能
+extend([mixPlugin])
+
+import { BUFFER_SIZE, TOOLBAR_HEIGHT } from './constant'
 import {
   MOBILE_CARD_HEIGHT,
   MOBILE_CARD_MARGIN,
@@ -32,7 +39,6 @@ import {
   MOBILE_CARD_TOTAL_HEIGHT,
   MOBILE_CELL_SPACING
 } from './mobileConstants'
-import { BUFFER_SIZE, TOOLBAR_HEIGHT } from './constant'
 
 const props = defineProps<{
   listHeight: number
@@ -95,7 +101,9 @@ function getCardStyle(isSelected: boolean, isHover: boolean) {
   let borderWidth = 1
 
   if (isSelected) {
-    bgColor = `color-mix(in srgb, ${theme.primaryColor} 10%, ${theme.cardColor})`
+    // bgColor = `color-mix(in srgb, ${theme.primaryColor} 10%, ${theme.cardColor})`
+    // borderColor = theme.primaryColor
+    bgColor = colord(theme.primaryColor).mix(theme.cardColor, 0.1).alpha(0.05).toRgbString()
     borderColor = theme.primaryColor
     borderWidth = 2
   } else if (isHover) {
