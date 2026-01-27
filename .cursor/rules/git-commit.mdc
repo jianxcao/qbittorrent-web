@@ -1,0 +1,151 @@
+---
+description: Git 提交规范
+globs: '{.git/**,CHANGELOG.md,.github/**}'
+alwaysApply: false
+---
+
+# Git 提交规范
+
+## Commit Message 格式
+
+遵循约定式提交规范（Conventional Commits）：
+
+```
+<type>(<scope>): <subject>
+
+<body>
+
+<footer>
+```
+
+### Type 类型
+
+- **feat**: 新功能
+- **fix**: 修复 bug
+- **docs**: 文档变更
+- **style**: 代码格式（不影响代码运行）
+- **refactor**: 重构（既不是新增功能，也不是修复 bug）
+- **perf**: 性能优化
+- **test**: 测试相关
+- **chore**: 构建过程或辅助工具的变动
+- **ci**: CI/CD 配置变更
+
+### Scope 范围（可选）
+
+- **api**: API 层变更
+- **store**: Store 状态管理
+- **ui**: UI 组件变更
+- **i18n**: 国际化相关
+- **build**: 构建配置
+- **deps**: 依赖更新
+
+### 示例
+
+```bash
+# 新功能
+feat(api): 添加种子批量操作接口
+
+添加批量暂停、恢复、删除种子的 API 方法
+支持按分类和标签筛选种子
+
+Closes #123
+
+# Bug 修复
+fix(ui): 修复移动端侧边栏无法关闭的问题
+
+修复在移动设备上点击遮罩层无法关闭侧边栏的 bug
+调整触摸事件处理逻辑
+
+# 重构
+refactor(store): 优化种子状态管理逻辑
+
+将种子状态更新逻辑从组件中提取到 store
+简化组件代码，提高可维护性
+
+# 文档
+docs: 更新 README 部署说明
+
+# 依赖更新
+chore(deps): 升级 Vue 到 3.5.27
+```
+
+## Commit 注意事项
+
+### Subject 规范
+
+- 使用中文或英文，保持团队一致
+- 使用祈使句，不超过 50 字符
+- 首字母小写，结尾不加句号
+- 简明扼要描述改动
+
+```bash
+# ❌ 错误
+fix: 修复了一个在移动端上侧边栏关闭不了的问题。
+
+# ✅ 正确
+fix(ui): 修复移动端侧边栏无法关闭
+```
+
+### Body 规范
+
+- 详细描述改动的原因和方式
+- 可以分多行
+- 每行不超过 72 字符
+
+### Footer 规范
+
+- 关闭 Issue: `Closes #123`
+- 关联 Issue: `Related to #456`
+- Breaking Changes: `BREAKING CHANGE: ...`
+
+## 提交前检查
+
+### 1. 代码质量检查
+
+```bash
+# 运行 lint 检查
+pnpm lint
+
+# 运行类型检查
+pnpm check
+```
+
+### 2. 提交内容检查
+
+- 不提交调试代码（debugger、console.log 除外）
+- 不提交注释掉的代码
+- 不提交临时文件
+- 不提交敏感信息（.env、密钥等）
+
+### 3. 原子性提交
+
+每个 commit 应该：
+- 只做一件事
+- 可以独立编译/运行
+- 可以安全回滚
+
+```bash
+# ❌ 错误：混合多个改动
+feat: 添加新功能、修复 bug、更新文档
+
+# ✅ 正确：拆分为多个提交
+feat(api): 添加种子批量操作接口
+fix(ui): 修复移动端侧边栏问题
+docs: 更新 API 文档
+```
+
+## Git 工作流
+
+### 分支命名
+
+- **main**: 主分支，保持稳定
+- **feature/xxx**: 功能分支
+- **fix/xxx**: 修复分支
+- **refactor/xxx**: 重构分支
+
+### 提交频率
+
+- 完成一个功能点就提交
+- 修复一个 bug 就提交
+- 重构一个模块就提交
+- 避免单个 commit 包含过多改动

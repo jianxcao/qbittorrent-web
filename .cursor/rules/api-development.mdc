@@ -1,0 +1,273 @@
+---
+description: API 层开发规范
+globs: 'src/api/**/*.{ts,js}'
+alwaysApply: false
+---
+
+# API 层开发规范
+
+## 文件组织
+
+```
+src/api/
+├── modules/           # 按功能模块组织
+│   ├── torrent.ts    # 种子相关 API
+│   ├── setting.ts    # 设置相关 API
+│   └── session.ts    # 会话相关 API
+├── http.ts           # HTTP 客户端配置
+├── types.ts          # API 类型定义
+└── index.ts          # 统一导出
+```
+
+## API 函数定义
+
+### 命名规范
+
+```typescript
+// ✅ 使用动词 + 名词的命名方式
+export function getTorrents() { }
+export function createTorrent() { }
+export function updateTorrent() { }
+export function deleteTorrent() { }
+export function pauseTorrents() { }
+export function resumeTorrents() { }
+```
+
+### 函数签名
+
+```typescript
+// ✅ 明确的参数和返回类型
+export async function getTorrentList(params: {
+  filter?: string
+  category?: string
+  tag?: string
+}): Promise<Torrent[]> {
+  const { data } = await httpClient.get('/api/torrents', { params })
+  return data
+}
+
+// ✅ 使用可选参数简化调用
+export async function deleteTorrent(
+  hash: string,
+  deleteFiles = false
+): Promise<void> {
+  await httpClient.post('/api/torrents/delete', {
+    hashes: hash,
+    deleteFiles
+  })
+}
+```
+
+## 错误处理
+
+### 统一错误处理模式
+
+```typescript
+// ✅ 在 API 函数中捕获并重新抛出错误
+export async function updateTorrentCategory(
+  hash: string,
+  category: string
+): Promise<void> {
+  try {
+    await httpClient.post('/api/torrents/setCategory', {
+      hashes: hash,
+      category
+    })
+  } catch (error) {
+    console.error('Failed to update category:', error)
+    throw error
+  }
+}
+```
+
+### HTTP 拦截器处理
+
+```typescript
+// ✅ 全局拦截器处理通用错误
+httpClient.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const { response } = error
+    
+    // 403 自动跳转登录
+    if (response?.status === 403) {
+      if (window.router.currentRoute.value.path !== '/login') {
+        window.router.push('/login')
+      }
+    }
+    
+    return Promise.reject(error)
+  }
+)
+```
+
+## 类型定义
+
+### 请求/响应类型
+
+```typescript
+// ✅ 在 types.ts 中定义所有 API 相关类型
+export interface Torrent {
+  hash: string
+  name: string
+  size: number
+  progress: number
+  state: TorrentState
+  // ... 其他字段
+}
+
+export type TorrentState = 
+  | 'downloading' 
+  | 'uploading' 
+  | 'pausedDL' 
+  | 'pausedUP'
+  | 'error'
+
+export interface TorrentListParams {
+  filter?: string
+  category?: string
+  tag?: string
+  sort?: string
+  reverse?: boolean
+  limit?: number
+  offset?: number
+}
+```
+
+### 泛型 API 响应
+
+```typescript
+// ✅ 使用泛型封装通用响应格式
+export interface ApiResponse<T> {
+  code: number
+  message: string
+  data: T
+}
+
+export async function fetchData<T>(url: string): Promise<T> {
+  const { data } = await httpClient.get<ApiResponse<T>>(url)
+  return data.data
+}
+```
+
+## 请求数据格式化
+
+### FormData 处理
+
+```typescript
+// ✅ 使用辅助函数处理 FormData
+export function toFormData(obj: Record<string, any>): FormData {
+  const formData = new FormData()
+  Object.entries(obj).forEach(([key, value]) => {
+    if (value !== undefined && value !== null) {
+      formData.append(key, value)
+    }
+  })
+  return formData
+}
+
+// 使用示例
+export async function uploadTorrent(file: File, params: {
+  savepath?: string
+  category?: string
+}): Promise<void> {
+  const formData = toFormData({
+    torrents: file,
+    ...params
+  })
+  await httpClient.post('/api/torrents/add', formData)
+}
+```
+
+### URL 编码处理
+
+```typescript
+// ✅ 使用辅助函数处理 URL 编码
+export function toUrlEncoded(obj: Record<string, any>): string {
+  return new URLSearchParams(obj).toString()
+}
+
+// 使用示例
+export async function login(username: string, password: string): Promise<void> {
+  await httpClient.post(
+    '/api/auth/login',
+    toUrlEncoded({ username, password }),
+    {
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+    }
+  )
+}
+```
+
+## API 模块导出
+
+### 统一导出模式
+
+```typescript
+// src/api/modules/torrent.ts
+export function getTorrents() { }
+export function pauseTorrent() { }
+export function resumeTorrent() { }
+
+// src/api/index.ts
+// ✅ 使用命名空间导出
+export * as torrentApi from './modules/torrent'
+export * as settingApi from './modules/setting'
+
+// 使用示例
+import { torrentApi } from '@/api'
+await torrentApi.getTorrents()
+```
+
+## 最佳实践
+
+### 1. 避免重复代码
+
+```typescript
+// ❌ 错误：重复的请求逻辑
+export function pauseTorrent(hash: string) {
+  return httpClient.post('/api/torrents/pause', { hashes: hash })
+}
+export function resumeTorrent(hash: string) {
+  return httpClient.post('/api/torrents/resume', { hashes: hash })
+}
+
+// ✅ 正确：提取通用逻辑
+function torrentAction(action: string, hash: string) {
+  return httpClient.post(`/api/torrents/${action}`, { hashes: hash })
+}
+export const pauseTorrent = (hash: string) => torrentAction('pause', hash)
+export const resumeTorrent = (hash: string) => torrentAction('resume', hash)
+```
+
+### 2. 使用常量管理 API 路径
+
+```typescript
+// ✅ 定义 API 路径常量
+const API_PATHS = {
+  TORRENTS: '/api/torrents',
+  TORRENT_PAUSE: '/api/torrents/pause',
+  TORRENT_RESUME: '/api/torrents/resume',
+} as const
+
+export function getTorrents() {
+  return httpClient.get(API_PATHS.TORRENTS)
+}
+```
+
+### 3. 合理使用缓存
+
+```typescript
+// ✅ 对频繁请求的数据使用缓存
+let cachedCategories: Category[] | null = null
+
+export async function getCategories(forceRefresh = false): Promise<Category[]> {
+  if (!forceRefresh && cachedCategories) {
+    return cachedCategories
+  }
+  
+  const { data } = await httpClient.get('/api/categories')
+  cachedCategories = data
+  return data
+}
+```

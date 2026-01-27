@@ -1,0 +1,405 @@
+---
+description: Vue 组件开发规范
+globs: 'src/{components,views}/**/*.vue'
+alwaysApply: false
+---
+
+# Vue 组件开发规范
+
+## 组件结构
+
+### 推荐的 SFC 顺序
+
+```vue
+<script setup lang="ts">
+// 1. 导入语句
+// 2. Props 定义
+// 3. Emits 定义
+// 4. 响应式状态
+// 5. Computed 属性
+// 6. 方法定义
+// 7. 生命周期钩子
+</script>
+
+<template>
+  <!-- 组件模板 -->
+</template>
+
+<style scoped lang="less">
+/* 组件样式 */
+</style>
+```
+
+### 完整示例
+
+```vue
+<script setup lang="ts">
+// 1. 导入
+import { ref, computed, onMounted } from 'vue'
+import { useTorrentStore } from '@/store'
+import type { Torrent } from '@/api/types'
+
+// 2. Props
+interface Props {
+  torrent: Torrent
+  showActions?: boolean
+}
+const props = withDefaults(defineProps<Props>(), {
+  showActions: true
+})
+
+// 3. Emits
+interface Emits {
+  (e: 'delete', hash: string): void
+  (e: 'pause', hash: string): void
+}
+const emit = defineEmits<Emits>()
+
+// 4. 状态
+const store = useTorrentStore()
+const isLoading = ref(false)
+
+// 5. Computed
+const progress = computed(() => `${(props.torrent.progress * 100).toFixed(1)}%`)
+
+// 6. 方法
+function handleDelete() {
+  emit('delete', props.torrent.hash)
+}
+
+// 7. 生命周期
+onMounted(() => {
+  console.log('Component mounted')
+})
+</script>
+
+<template>
+  <div class="torrent-item">
+    <div class="name">{{ torrent.name }}</div>
+    <div class="progress">{{ progress }}</div>
+  </div>
+</template>
+
+<style scoped lang="less">
+.torrent-item {
+  padding: 12px;
+  border-radius: 4px;
+}
+</style>
+```
+
+## Composition API 规范
+
+### 使用 `<script setup>`
+
+```vue
+<!-- ✅ 推荐：使用 script setup -->
+<script setup lang="ts">
+const count = ref(0)
+const double = computed(() => count.value * 2)
+</script>
+
+<!-- ❌ 避免：传统 setup 函数 -->
+<script lang="ts">
+export default {
+  setup() {
+    const count = ref(0)
+    return { count }
+  }
+}
+</script>
+```
+
+### 提取复杂逻辑到 Composables
+
+```typescript
+// src/composables/useTorrentActions.ts
+export function useTorrentActions() {
+  const store = useTorrentStore()
+  
+  const pause = async (hash: string) => {
+    try {
+      await store.pauseTorrent(hash)
+      window.$message?.success('暂停成功')
+    } catch (error) {
+      window.$message?.error('暂停失败')
+    }
+  }
+  
+  return {
+    pause,
+    resume,
+    delete: deleteTorrent
+  }
+}
+```
+
+```vue
+<!-- 在组件中使用 -->
+<script setup lang="ts">
+import { useTorrentActions } from '@/composables/useTorrentActions'
+
+const { pause, resume, delete: deleteTorrent } = useTorrentActions()
+</script>
+```
+
+## Props 和 Emits
+
+### Props 类型定义
+
+```typescript
+// ✅ 使用 interface 定义 Props
+interface Props {
+  torrent: Torrent
+  showActions?: boolean
+  size?: 'small' | 'medium' | 'large'
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  showActions: true,
+  size: 'medium'
+})
+```
+
+### Emits 类型定义
+
+```typescript
+// ✅ 使用 interface 定义 Emits
+interface Emits {
+  (e: 'update:modelValue', value: string): void
+  (e: 'delete', id: string): void
+  (e: 'change', oldValue: string, newValue: string): void
+}
+
+const emit = defineEmits<Emits>()
+```
+
+## 模板规范
+
+### 指令顺序
+
+```vue
+<!-- ✅ 推荐的指令顺序 -->
+<div
+  v-if="isVisible"
+  v-for="item in items"
+  :key="item.id"
+  :class="itemClass"
+  @click="handleClick"
+>
+  {{ item.name }}
+</div>
+```
+
+### 条件渲染
+
+```vue
+<!-- ✅ 简单条件使用 v-if/v-else -->
+<div v-if="isLoading">
+  加载中...
+</div>
+<div v-else>
+  {{ content }}
+</div>
+
+<!-- ✅ 多条件使用 computed -->
+<script setup lang="ts">
+const statusText = computed(() => {
+  if (isLoading.value) {
+    return '加载中...'
+  }
+  if (hasError.value) {
+    return '加载失败'
+  }
+  return content.value
+})
+</script>
+
+<template>
+  <div>{{ statusText }}</div>
+</template>
+```
+
+### 列表渲染
+
+```vue
+<!-- ✅ 始终使用 key -->
+<div
+  v-for="torrent in torrents"
+  :key="torrent.hash"
+  class="torrent-item"
+>
+  {{ torrent.name }}
+</div>
+
+<!-- ❌ 避免使用 index 作为 key -->
+<div
+  v-for="(item, index) in items"
+  :key="index"
+>
+  {{ item.name }}
+</div>
+```
+
+## 样式规范
+
+### 使用 Scoped 样式
+
+```vue
+<!-- ✅ 使用 scoped 避免样式污染 -->
+<style scoped lang="less">
+.torrent-item {
+  padding: 12px;
+  
+  .name {
+    font-size: 14px;
+    font-weight: 500;
+  }
+}
+</style>
+```
+
+### 使用 UnoCSS 工具类
+
+```vue
+<!-- ✅ 优先使用 UnoCSS 工具类 -->
+<template>
+  <div class="flex items-center gap-2 p-4">
+    <span class="text-sm font-medium">{{ name }}</span>
+  </div>
+</template>
+
+<!-- ✅ 复杂样式使用 scoped style -->
+<style scoped lang="less">
+.custom-component {
+  background: linear-gradient(to right, #667eea 0%, #764ba2 100%);
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+}
+</style>
+```
+
+## 组件命名
+
+### 文件命名
+
+```bash
+# ✅ 使用 PascalCase
+CanvasList.vue
+AppHeader.vue
+TorrentItem.vue
+
+# ❌ 避免
+canvas-list.vue
+torrent_item.vue
+```
+
+### 组件引用
+
+```vue
+<script setup lang="ts">
+// ✅ 组件会自动注册（unplugin-vue-components）
+// ✅ 手动导入时使用 PascalCase
+import TorrentItem from '@/components/TorrentItem.vue'
+</script>
+
+<template>
+  <!-- ✅ 在模板中使用 PascalCase -->
+  <TorrentItem :torrent="torrent" />
+  
+  <!-- ✅ 或使用 kebab-case -->
+  <torrent-item :torrent="torrent" />
+</template>
+```
+
+## 性能优化
+
+### 使用 v-memo 优化列表
+
+```vue
+<template>
+  <div
+    v-for="torrent in torrents"
+    :key="torrent.hash"
+    v-memo="[torrent.progress, torrent.state]"
+  >
+    <!-- 只有 progress 或 state 变化时才重新渲染 -->
+    <TorrentItem :torrent="torrent" />
+  </div>
+</template>
+```
+
+### 使用虚拟滚动
+
+```vue
+<script setup lang="ts">
+import { DynamicScroller, DynamicScrollerItem } from 'vue-virtual-scroller'
+import 'vue-virtual-scroller/dist/vue-virtual-scroller.css'
+</script>
+
+<template>
+  <DynamicScroller
+    :items="torrents"
+    :min-item-size="60"
+    class="scroller"
+  >
+    <template #default="{ item, index, active }">
+      <DynamicScrollerItem
+        :item="item"
+        :active="active"
+        :data-index="index"
+      >
+        <TorrentItem :torrent="item" />
+      </DynamicScrollerItem>
+    </template>
+  </DynamicScroller>
+</template>
+```
+
+## 最佳实践
+
+### 1. 保持组件精简
+
+- 单个组件不超过 300 行
+- 复杂逻辑提取到 composables
+- 复杂组件拆分为子组件
+
+### 2. 避免直接修改 Props
+
+```vue
+<script setup lang="ts">
+interface Props {
+  modelValue: string
+}
+const props = defineProps<Props>()
+const emit = defineEmits<{
+  (e: 'update:modelValue', value: string): void
+}>()
+
+// ✅ 使用 computed 处理 v-model
+const value = computed({
+  get: () => props.modelValue,
+  set: (val) => emit('update:modelValue', val)
+})
+</script>
+```
+
+### 3. 使用 defineExpose 暴露组件方法
+
+```vue
+<script setup lang="ts">
+const inputRef = ref<HTMLInputElement>()
+
+function focus() {
+  inputRef.value?.focus()
+}
+
+// ✅ 暴露给父组件调用
+defineExpose({
+  focus
+})
+</script>
+```

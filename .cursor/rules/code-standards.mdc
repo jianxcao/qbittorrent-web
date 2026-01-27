@@ -1,0 +1,135 @@
+---
+description: qb-web 项目代码编写规范
+globs: '**/*.{ts,vue,js,mts,tsx}'
+alwaysApply: false
+---
+
+# 代码编写规范
+
+## 代码风格
+
+### 格式化规则
+
+- **无分号**: 所有语句结尾不使用分号
+- **单引号**: 字符串统一使用单引号
+- **行宽限制**: 最大 120 字符
+- **缩进**: 2 个空格
+- **花括号**: 所有控制结构必须使用花括号
+
+```typescript
+// ❌ 错误
+if (condition) doSomething()
+
+// ✅ 正确
+if (condition) {
+  doSomething()
+}
+```
+
+### Import 顺序
+
+严格遵循三层导入顺序：
+
+```typescript
+// 1. Vue 生态系统
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+
+// 2. 第三方库
+import axios from 'axios'
+import { defineStore } from 'pinia'
+import dayjs from 'dayjs'
+
+// 3. 本地导入（使用 @ 别名）
+import { useTorrentStore } from '@/store'
+import type { Torrent } from '@/api/types'
+import { formatSpeed } from '@/utils'
+```
+
+## TypeScript 规范
+
+### 类型定义
+
+```typescript
+// ❌ 避免使用 any
+const data: any = await fetchData()
+
+// ✅ 定义明确的类型
+interface FetchResponse {
+  data: Torrent[]
+  total: number
+}
+const result: FetchResponse = await fetchData()
+```
+
+### 类型导入
+
+```typescript
+// ✅ 使用 type 关键字导入类型
+import type { Torrent, TorrentState } from '@/api/types'
+
+// ✅ 混合导入时分离类型和值
+import { defineStore } from 'pinia'
+import type { StoreDefinition } from 'pinia'
+```
+
+## 错误处理
+
+### 必须处理异步错误
+
+```typescript
+// ❌ 错误：忽略错误
+try {
+  await fetchTorrents()
+} catch (e) {}
+
+// ✅ 正确：记录并处理错误
+try {
+  await fetchTorrents()
+} catch (error) {
+  console.error('Failed to fetch torrents:', error)
+  window.$message?.error('获取种子列表失败')
+  throw error
+}
+```
+
+### HTTP 错误处理
+
+```typescript
+// ✅ 在 API 调用中统一处理错误
+export async function getTorrents() {
+  try {
+    const { data } = await httpClient.get('/api/torrents')
+    return data
+  } catch (error) {
+    console.error('API Error:', error)
+    // 全局拦截器会处理 403 重定向
+    throw error
+  }
+}
+```
+
+## Console 日志
+
+```typescript
+// ✅ 允许使用 console 语句（开发调试）
+console.log('Debug info:', data)
+console.error('Error occurred:', error)
+
+// 💡 生产环境会自动移除 console
+```
+
+## 代码组织
+
+### 文件命名
+
+- **Vue 组件**: PascalCase (例如: `CanvasList.vue`, `AppHeader.vue`)
+- **工具函数**: camelCase (例如: `formatSpeed.ts`)
+- **Composables**: `use` 前缀 + camelCase (例如: `useColumns.ts`)
+- **目录**: kebab-case (例如: `api-client/`, `torrent-list/`)
+
+### 保持文件精简
+
+- 单个 Vue 组件不超过 300 行
+- 单个函数不超过 50 行
+- 复杂逻辑提取到 composables 或 utils
