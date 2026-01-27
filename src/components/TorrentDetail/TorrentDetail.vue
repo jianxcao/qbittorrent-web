@@ -1,5 +1,5 @@
 <template>
-  <div class="torrent-detail" :style="{ height: props.height + 'px' }">
+  <div class="torrent-detail" :style="detailStyle">
     <n-tabs
       v-model:value="activeTab"
       type="card"
@@ -30,15 +30,14 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useTorrentDetailStore } from '@/store/torrentDetail'
-import GeneralTab from './GeneralTab'
-import TrackersTab from './TrackersTab'
-import PeersTab from './PeersTab.vue'
-import HttpSourcesTab from './HttpSourcesTab.vue'
-import ContentTab from './ContentTab.vue'
 
 const props = defineProps<{
-  height: number
+  height?: number
 }>()
+
+const detailStyle = computed(() => {
+  return props.height ? { height: `${props.height}px` } : { height: '100%' }
+})
 
 const torrentDetailStore = useTorrentDetailStore()
 const activeTab = computed({

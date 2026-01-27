@@ -183,9 +183,10 @@ function renderCard(torrent: any, index: number, y: number) {
       }
       parent = parent.parent
     }
-
     // 普通卡片点击
-    handleCardClick(index, e)
+    setTimeout(() => {
+      handleCardClick(index, e)
+    }, 100)
   })
 
   cardGroup.on('pointer.enter', () => {

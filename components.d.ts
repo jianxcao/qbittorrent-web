@@ -43,6 +43,8 @@ declare module 'vue' {
     LimitSpeedDialog: typeof import('./src/components/dialog/LimitSpeedDialog.vue')['default']
     ListHeader: typeof import('./src/components/CanvasList/ListHeader.vue')['default']
     MobileActionDropdown: typeof import('./src/components/AppHeader/MobileActionDropdown.vue')['default']
+    MobileDetailDrawer: typeof import('./src/components/MobileDetailDrawer.vue')['default']
+    MobileSidebarDrawer: typeof import('./src/components/MobileSidebarDrawer.vue')['default']
     NAutoComplete: typeof import('naive-ui')['NAutoComplete']
     NButton: typeof import('naive-ui')['NButton']
     NCard: typeof import('naive-ui')['NCard']

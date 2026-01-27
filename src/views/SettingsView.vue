@@ -1,19 +1,19 @@
 <template>
-  <n-layout :class="$style.layout">
-    <n-layout-header :class="$style.header" bordered>
-      <div :class="$style.headerContent">
+  <n-el class="layout">
+    <div class="header" bordered>
+      <div class="header-content">
         <n-button quaternary circle @click="onBack">
           <template #icon>
             <n-icon :component="ArrowBackSharp" />
           </template>
         </n-button>
-        <h2 :class="$style.title">{{ $t('settings.title') }}</h2>
+        <h2 class="title">{{ $t('settings.title') }}</h2>
       </div>
-    </n-layout-header>
-    <n-layout-content :class="$style.content">
+    </div>
+    <div class="content">
       <SettingsLayout :active-tab="activeTab" @close="onClose" @saved="onSaved" />
-    </n-layout-content>
-  </n-layout>
+    </div>
+  </n-el>
 </template>
 
 <script setup lang="ts">
@@ -44,11 +44,14 @@ function onSaved() {
 }
 </script>
 
-<style module>
+<style lang="less" scoped>
 .layout {
   height: 100vh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .header {
@@ -56,9 +59,10 @@ function onSaved() {
   align-items: center;
   padding: 0 16px;
   height: 56px;
+  box-sizing: border-box;
 }
 
-.headerContent {
+.header-content {
   display: flex;
   align-items: center;
   gap: 12px;

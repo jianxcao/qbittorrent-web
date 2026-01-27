@@ -1,17 +1,17 @@
 <template>
   <n-spin v-if="loading" :show="loading" size="large" class="min-h-screen min-w-screen" />
-  <div v-else :class="$style['dashboard-grid']" :style="{ gridTemplateColumns: girdLayout }">
+  <div v-else class="dashboard-grid" :style="{ gridTemplateColumns: gridLayout }">
     <!-- Header -->
-    <n-layout-header :class="$style.header" bordered>
-      <n-button quaternary circle @click="onSidebarToggle">
+    <n-layout-header class="header" bordered>
+      <n-button quaternary circle @click="handleSidebarToggle">
         <n-icon size="20" :component="LayoutSidebarLeftOpen" />
       </n-button>
-      <AppHeader @layoutBottom="onLayoutBottom" />
+      <AppHeader @layout-bottom="handleLayoutBottom" />
     </n-layout-header>
 
     <!-- Sidebar (PC) 可拖拽宽度 -->
-    <div v-if="!isMobile" :class="$style['sidebar-container']">
-      <SidebarView :class="$style.sidebar" />
+    <div v-if="!isMobile" class="sidebar-container">
+      <SidebarView class="sidebar" />
       <ResizeLine
         v-model:container-width="settingStore.sidebarWidth"
         :min-container-width="120"
@@ -20,10 +20,10 @@
     </div>
 
     <!-- Main Content -->
-    <main :class="$style.content">
-      <CanvasList v-if="!isMobile || toolbarStore.listType === 'table'" :list-height="listheight" />
-      <CanvasMobileList v-else :list-height="listheight" />
-      <div v-if="!isMobile" :class="$style['detail-container']" ref="detailContainerRef">
+    <main class="content">
+      <CanvasList v-if="!isMobile || toolbarStore.listType === 'table'" :list-height="listHeight" />
+      <CanvasMobileList v-else :list-height="listHeight" />
+      <div v-if="!isMobile" ref="detailContainerRef" class="detail-container">
         <template v-if="pcDetailVisible">
           <ResizeHorizontalLine
             v-model:container-height="settingStore.detailHeight"
@@ -36,102 +36,99 @@
     </main>
 
     <!-- Footer -->
-    <StatusBar :class="$style.footer" />
+    <StatusBar class="footer" />
 
-    <!-- 移动端 Sidebar 抽屉 -->
-    <n-drawer
-      v-model:show="drawerVisible"
-      placement="left"
-      width="85vw"
-      to="body"
-      v-if="isMobile"
-      :mask-closable="true"
-      :class="$style['drawer-sidebar']"
-    >
-      <n-drawer-content>
-        <SidebarView :class="$style.sidebar" />
-      </n-drawer-content>
-    </n-drawer>
-
-    <!-- 移动端 详情抽屉（从右侧） -->
-    <!-- <n-drawer
-      v-if="isMobile"
-      v-model:show="mobileDetailVisible"
-      placement="right"
-      width="92vw"
-      to="body"
-      :class="$style['drawer-sidebar']"
-      :mask-closable="true"
-    >
-      <n-drawer-content :body-content-class="$style['drawer-mobile-detail']">
-        <TorrentDetail closable @close="onCloseDetail" :loading="loadingDetail" />
-      </n-drawer-content>
-    </n-drawer> -->
+    <!-- 移动端抽屉 -->
+    <template v-if="isMobile">
+      <MobileSidebarDrawer v-model:visible="mobileSidebarVisible" />
+      <MobileDetailDrawer v-model:visible="mobileDetailVisible" @close="handleCloseDetail" :loading="loadingDetail" />
+    </template>
   </div>
 </template>
+
 <script setup lang="ts">
+// ==================== 导入 ====================
+// 1. Vue 生态系统
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
+
+// 2. 第三方库
+import { useLocalStorage } from '@vueuse/core'
+
+// 3. 本地导入
 import LayoutSidebarLeftOpen from '@/assets/icons/layoutSidebarLeft.svg?component'
+import { useDashboardLayout } from '@/composables/useDashboardLayout'
 import { useIsSmallScreen } from '@/composables/useIsSmallScreen'
-import router from '@/router'
-import { useSettingStore, useTorrentStore, useTorrentDetailStore } from '@/store'
+import { useSettingStore, useTorrentDetailStore, useTorrentStore } from '@/store'
 import { useSessionStore } from '@/store/session'
 import { useToolbarStore } from '@/store/toolbarStore'
 
+// ==================== Store 和 Router ====================
+const router = useRouter()
 const torrentStore = useTorrentStore()
 const torrentDetailStore = useTorrentDetailStore()
 const sessionStore = useSessionStore()
 const settingStore = useSettingStore()
 const toolbarStore = useToolbarStore()
+
+// ==================== 响应式状态 ====================
 const loading = ref(true)
-const drawerVisible = ref(false)
+const loadingDetail = ref(false)
+
+// 持久化状态
 const isMobile = useIsSmallScreen()
-const siderBarVisible = useLocalStorage<boolean>('siderBarVisible', true)
-const detailContainerRef = useTemplateRef<HTMLElement>('detailContainerRef')
+const sidebarVisible = useLocalStorage<boolean>('sidebarVisible', true)
 const pcDetailVisible = useLocalStorage<boolean>('pcDetailVisible', !isMobile.value)
 
+// 布局管理
+const { listHeight, detailContainerRef, initHeight, cleanupListeners } = useDashboardLayout(isMobile, pcDetailVisible)
+
+// 移动端抽屉状态
+const mobileSidebarVisible = ref(false)
 const mobileDetailVisible = computed({
-  get: () => isMobile.value && torrentStore.selectedKeys.length > 0,
+  get: () => isMobile.value && !toolbarStore.selectMode && torrentStore.selectedKeys.length > 0,
   set: (val: boolean) => {
     if (!val) {
       torrentStore.clearSelectedKeys()
     }
   }
 })
-const loadingDetail = ref(false)
 
-watchEffect(() => {
-  console.debug('toolbarStore.listType', toolbarStore.listType)
-})
-
-const bodyHeight = ref(document.body.clientHeight || document.documentElement.clientHeight)
-
-// 获取考虑安全区域的可用高度
-const getAvailableHeight = () => {
-  const viewportHeight = window.innerHeight
-  const safeAreaTop = settingStore.safeArea.top
-  const safeAreaBottom = settingStore.safeArea.bottom
-  return viewportHeight - safeAreaTop - safeAreaBottom
-}
-
-// 初始化高度
-bodyHeight.value = getAvailableHeight()
-
-// 事件处理函数
-const handleResize = () => {
-  bodyHeight.value = getAvailableHeight()
-}
-
-const listheight = computed(() => {
-  const detailHeight = !isMobile.value && pcDetailVisible.value ? settingStore.detailHeight : 0
-  return bodyHeight.value - settingStore.headerHeight - settingStore.footerHeight - detailHeight
-})
-
-watchEffect(() => {
-  if (detailContainerRef.value && pcDetailVisible.value) {
-    detailContainerRef.value.style.transform = `translateY(${listheight.value}px)`
+// ==================== Computed 属性 ====================
+// Grid 布局计算
+const gridLayout = computed(() => {
+  if (isMobile.value || !sidebarVisible.value) {
+    return '0px 1fr'
   }
+  return `${settingStore.sidebarWidth}px 1fr`
 })
 
+// ==================== 方法 ====================
+
+// 侧边栏切换
+function handleSidebarToggle() {
+  if (isMobile.value) {
+    mobileSidebarVisible.value = !mobileSidebarVisible.value
+  } else {
+    sidebarVisible.value = !sidebarVisible.value
+  }
+}
+
+// 关闭详情面板
+function handleCloseDetail() {
+  torrentStore.clearSelectedKeys()
+}
+
+// 切换底部详情面板
+function handleLayoutBottom() {
+  if (isMobile.value) {
+    pcDetailVisible.value = false
+  } else {
+    pcDetailVisible.value = !pcDetailVisible.value
+  }
+}
+
+// 详情面板数据加载和轮询
 watch([pcDetailVisible, mobileDetailVisible, () => torrentStore.selectedKeys], () => {
   if (pcDetailVisible.value || mobileDetailVisible.value) {
     loadingDetail.value = true
@@ -144,44 +141,17 @@ watch([pcDetailVisible, mobileDetailVisible, () => torrentStore.selectedKeys], (
   }
 })
 
-const scrollContainer = ref<HTMLElement>(document.body)
-useResizeObserver(scrollContainer, () => {
-  bodyHeight.value = getAvailableHeight()
+watchEffect(() => {
+  console.debug('toolbarStore.listType', mobileDetailVisible.value)
 })
 
-const girdLayout = computed(() => {
-  if (isMobile.value || !siderBarVisible.value) {
-    return '0px 1fr'
-  }
-  return `${settingStore.sidebarWidth}px 1fr`
-})
-
-function onSidebarToggle() {
-  if (isMobile.value) {
-    drawerVisible.value = !drawerVisible.value
-  } else {
-    siderBarVisible.value = !siderBarVisible.value
-  }
-}
-
-// function onCloseDetail() {
-//   torrentStore.clearSelectedKeys()
-// }
-
-function onLayoutBottom() {
-  if (isMobile.value) {
-    pcDetailVisible.value = false
-  } else {
-    pcDetailVisible.value = !pcDetailVisible.value
-  }
-}
-
+// ==================== 生命周期 ====================
 onMounted(async () => {
   loading.value = true
 
-  // 设置事件监听器，确保在设备旋转或安全区域变化时更新高度
-  window.addEventListener('resize', handleResize)
-  window.addEventListener('orientationchange', handleResize)
+  // 初始化布局
+  initHeight()
+
   try {
     await sessionStore.fetchVersion()
     await torrentStore.fetchTorrents()
@@ -196,14 +166,11 @@ onMounted(async () => {
 
 onUnmounted(() => {
   torrentStore.stopPolling()
-
-  // 清理事件监听器
-  window.removeEventListener('resize', handleResize)
-  window.removeEventListener('orientationchange', handleResize)
+  cleanupListeners()
 })
 </script>
 
-<style lang="less" module>
+<style lang="less" scoped>
 @import '@/styles/mix.less';
 
 .dashboard-grid {
@@ -240,7 +207,6 @@ onUnmounted(() => {
     width: 100%;
     height: 100%;
     overflow: auto;
-    height: 100%;
     box-sizing: border-box;
     // 美化滚动条
     .scrollbar();
@@ -270,17 +236,5 @@ onUnmounted(() => {
   left: 0;
   top: 0;
   width: 100%;
-}
-
-.drawer-sidebar {
-  height: 100vh;
-  height: 100dvh;
-  padding-top: var(--top-inset);
-  padding-bottom: var(--bottom-inset);
-  overflow: hidden;
-}
-
-.drawer-mobile-detail {
-  padding: 12px 4px !important;
 }
 </style>

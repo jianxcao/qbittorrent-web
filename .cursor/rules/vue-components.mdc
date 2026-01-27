@@ -116,7 +116,7 @@ export default {
 // src/composables/useTorrentActions.ts
 export function useTorrentActions() {
   const store = useTorrentStore()
-  
+
   const pause = async (hash: string) => {
     try {
       await store.pauseTorrent(hash)
@@ -125,7 +125,7 @@ export function useTorrentActions() {
       window.$message?.error('暂停失败')
     }
   }
-  
+
   return {
     pause,
     resume,
@@ -180,13 +180,7 @@ const emit = defineEmits<Emits>()
 
 ```vue
 <!-- ✅ 推荐的指令顺序 -->
-<div
-  v-if="isVisible"
-  v-for="item in items"
-  :key="item.id"
-  :class="itemClass"
-  @click="handleClick"
->
+<div v-if="isVisible" v-for="item in items" :key="item.id" :class="itemClass" @click="handleClick">
   {{ item.name }}
 </div>
 ```
@@ -224,19 +218,12 @@ const statusText = computed(() => {
 
 ```vue
 <!-- ✅ 始终使用 key -->
-<div
-  v-for="torrent in torrents"
-  :key="torrent.hash"
-  class="torrent-item"
->
+<div v-for="torrent in torrents" :key="torrent.hash" class="torrent-item">
   {{ torrent.name }}
 </div>
 
 <!-- ❌ 避免使用 index 作为 key -->
-<div
-  v-for="(item, index) in items"
-  :key="index"
->
+<div v-for="(item, index) in items" :key="index">
   {{ item.name }}
 </div>
 ```
@@ -250,7 +237,7 @@ const statusText = computed(() => {
 <style scoped lang="less">
 .torrent-item {
   padding: 12px;
-  
+
   .name {
     font-size: 14px;
     font-weight: 500;
@@ -273,7 +260,7 @@ const statusText = computed(() => {
 <style scoped lang="less">
 .custom-component {
   background: linear-gradient(to right, #667eea 0%, #764ba2 100%);
-  
+
   &:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -300,19 +287,19 @@ torrent_item.vue
 ### 组件引用
 
 ```vue
+<template>
+  <!-- ✅ 在模板中使用 PascalCase -->
+  <TorrentItem :torrent="torrent" />
+
+  <!-- ✅ 或使用 kebab-case -->
+  <torrent-item :torrent="torrent" />
+</template>
+
 <script setup lang="ts">
 // ✅ 组件会自动注册（unplugin-vue-components）
 // ✅ 手动导入时使用 PascalCase
 import TorrentItem from '@/components/TorrentItem.vue'
 </script>
-
-<template>
-  <!-- ✅ 在模板中使用 PascalCase -->
-  <TorrentItem :torrent="torrent" />
-  
-  <!-- ✅ 或使用 kebab-case -->
-  <torrent-item :torrent="torrent" />
-</template>
 ```
 
 ## 性能优化
@@ -321,11 +308,7 @@ import TorrentItem from '@/components/TorrentItem.vue'
 
 ```vue
 <template>
-  <div
-    v-for="torrent in torrents"
-    :key="torrent.hash"
-    v-memo="[torrent.progress, torrent.state]"
-  >
+  <div v-for="torrent in torrents" :key="torrent.hash" v-memo="[torrent.progress, torrent.state]">
     <!-- 只有 progress 或 state 变化时才重新渲染 -->
     <TorrentItem :torrent="torrent" />
   </div>
@@ -341,17 +324,9 @@ import 'vue-virtual-scroller/dist/vue-virtual-scroller.css'
 </script>
 
 <template>
-  <DynamicScroller
-    :items="torrents"
-    :min-item-size="60"
-    class="scroller"
-  >
+  <DynamicScroller :items="torrents" :min-item-size="60" class="scroller">
     <template #default="{ item, index, active }">
-      <DynamicScrollerItem
-        :item="item"
-        :active="active"
-        :data-index="index"
-      >
+      <DynamicScrollerItem :item="item" :active="active" :data-index="index">
         <TorrentItem :torrent="item" />
       </DynamicScrollerItem>
     </template>

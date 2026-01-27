@@ -162,5 +162,6 @@ function onCancel() {
 .actions {
   padding: 16px 20px;
   padding-bottom: 0;
+  border-top: 1px solid var(--border-color);
 }
 </style>
