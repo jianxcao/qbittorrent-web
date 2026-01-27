@@ -377,7 +377,10 @@
       "content": "内容"
     },
     "general": {
-      "noData": "暂无数据"
+      "noData": "暂无数据",
+      "progress": "下载进度",
+      "completed": "已完成",
+      "pieces": "区块"
     },
     "transfer": {
       "title": "传输",

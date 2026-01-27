@@ -1,7 +1,7 @@
 <template>
   <div class="transfer-info">
     <h3 class="section-title">{{ $t('torrentDetail.transfer.title') }}</h3>
-    <n-descriptions label-placement="left" bordered :column="2">
+    <n-descriptions label-placement="left" bordered :column="isMobile ? 1 : 2">
       <!-- 活动时间 -->
       <n-descriptions-item :label="$t('torrentDetail.transfer.timeActive')">
         {{ formatDuration(properties.time_elapsed) }}
@@ -84,6 +84,9 @@
 <script setup lang="ts">
 import type { TorrentProperties } from '@/api/types'
 import { formatSize, formatSpeed, timeToStr as formatDuration, formatTimestamp as formatDate } from '@/utils'
+import { useIsSmallScreen } from '@/composables/useIsSmallScreen'
+
+const isMobile = useIsSmallScreen()
 
 defineProps<{
   properties: TorrentProperties

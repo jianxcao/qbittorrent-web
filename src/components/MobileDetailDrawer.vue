@@ -62,35 +62,42 @@ function handleClose() {
 }
 </script>
 
-<style lang="less" scoped>
+<style lang="less">
 .mobile-detail-drawer {
   height: 100vh;
   height: 100dvh;
   padding-top: var(--top-inset);
   padding-bottom: var(--bottom-inset);
   overflow: hidden;
-}
-
-.drawer-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  padding-right: 8px;
-}
-
-.drawer-title {
-  flex: 1;
-  margin: 0;
-  font-size: 16px;
-  font-weight: 600;
-  line-height: 1.4;
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  text-overflow: ellipsis;
-  word-break: break-all;
+  .n-drawer-content-wrapper {
+    .n-drawer-body-content-wrapper {
+      padding: 4px;
+    }
+  }
+  .n-drawer-content {
+    .n-drawer-header {
+      padding: 12px 0px 12px 12px;
+      .drawer-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        width: 100%;
+      }
+      .drawer-title {
+        flex: 1;
+        margin: 0;
+        font-size: 16px;
+        font-weight: 600;
+        line-height: 1.4;
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        text-overflow: ellipsis;
+        word-break: break-all;
+      }
+    }
+  }
 }
 </style>

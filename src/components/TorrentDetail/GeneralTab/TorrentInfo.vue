@@ -1,7 +1,7 @@
 <template>
   <div class="torrent-info">
     <h3 class="section-title">{{ $t('torrentDetail.info.title') }}</h3>
-    <n-descriptions label-placement="left" bordered :column="2">
+    <n-descriptions label-placement="left" bordered :column="isMobile ? 1 : 2">
       <!-- 总大小 -->
       <n-descriptions-item :label="$t('torrentDetail.info.totalSize')">
         {{ formatSize(properties.total_size) }}
@@ -34,8 +34,8 @@
       <n-descriptions-item :label="$t('torrentDetail.info.private')">
         {{ properties.is_private ? $t('common.yes') : $t('common.no') }}
       </n-descriptions-item>
-      <!-- 空白占位 -->
-      <n-descriptions-item label=" "> &nbsp; </n-descriptions-item>
+      <!-- 空白占位 (仅 PC 端) -->
+      <n-descriptions-item v-if="!isMobile" label=" "> &nbsp; </n-descriptions-item>
 
       <!-- 信息哈希值 v1 -->
       <n-descriptions-item :label="$t('torrentDetail.info.hashV1')" :span="2">
@@ -63,6 +63,9 @@
 <script setup lang="ts">
 import type { TorrentProperties } from '@/api/types'
 import { formatSize, formatTimestamp as formatDate } from '@/utils'
+import { useIsSmallScreen } from '@/composables/useIsSmallScreen'
+
+const isMobile = useIsSmallScreen()
 
 defineProps<{
   properties: TorrentProperties

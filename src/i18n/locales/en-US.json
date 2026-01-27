@@ -377,7 +377,10 @@
       "content": "Content"
     },
     "general": {
-      "noData": "No data available"
+      "noData": "No data available",
+      "progress": "Download Progress",
+      "completed": "Completed",
+      "pieces": "Pieces"
     },
     "transfer": {
       "title": "Transfer",
