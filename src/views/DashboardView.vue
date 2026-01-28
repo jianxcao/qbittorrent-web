@@ -141,10 +141,6 @@ watch([pcDetailVisible, mobileDetailVisible, () => torrentStore.selectedKeys], (
   }
 })
 
-watchEffect(() => {
-  console.debug('toolbarStore.listType', mobileDetailVisible.value)
-})
-
 // ==================== 生命周期 ====================
 onMounted(async () => {
   loading.value = true

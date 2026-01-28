@@ -154,7 +154,26 @@ function getRowBgColors(params: { isSelected: boolean; isHover: boolean; isEven:
 
 function attachRowEvents(rowGroup: Group, rowIndex: number) {
   rowGroup.on('tap', (e: any) => {
+    console.debug('tap triggered')
     handleRowClick(rowIndex, e)
+  })
+  rowGroup.on('long_press', (e: any) => {
+    const torrents = torrentStore.filterTorrents
+    if (rowIndex < 0 || rowIndex >= torrents.length || containerRef.value === undefined) {
+      return
+    }
+    const rect = containerRef.value.getBoundingClientRect()
+    const screenX = rect.left + e.x
+    const screenY = rect.top + e.y
+    const torrent = torrents[rowIndex]
+    rowMenuStore.openMenu(torrent.hash, screenX, screenY)
+    if (toolbarStore.selectMode) {
+      // Right click selection logic
+      if (!torrentStore.selectedKeys.includes(torrent.hash)) {
+        torrentStore.setSelectedKeys([torrent.hash])
+        torrentStore.setLastSelectedIndex(rowIndex)
+      }
+    }
   })
   rowGroup.on('pointer.enter', () => {
     hoverRowIndex.value = rowIndex
@@ -446,7 +465,10 @@ onMounted(() => {
   leafer = new Leafer({
     view: containerRef.value,
     width: containerWidth.value,
-    height: props.listHeight
+    height: props.listHeight,
+    pointer: {
+      longPressTime: 500
+    }
   })
 
   // 创建滚动内容组（随 scrollLeft 平移）
