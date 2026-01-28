@@ -237,7 +237,6 @@ function handleCardClick(rowIndex: number, e: any) {
     torrentStore.selectRange(rowIndex)
   } else {
     torrentStore.toggleSelectedKey(torrent.hash)
-    torrentStore.setLastSelectedHash(torrent.hash)
   }
 }
 

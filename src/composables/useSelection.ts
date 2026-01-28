@@ -3,7 +3,6 @@ import { ref, computed } from 'vue'
 // 通用 选中逻辑，负责选中行
 // 支持 hash (string) 作为唯一标识符
 export function useSelection<T extends { hash: string }>(items: () => T[]) {
-  console.debug('useSelection', items())
   const selectedKeys = ref<string[]>([])
   const lastSelectedHash = ref<string | null>(null)
   const mapSelectedKeys = computed(() =>
@@ -18,13 +17,16 @@ export function useSelection<T extends { hash: string }>(items: () => T[]) {
   // 设置选中
   function setSelectedKeys(keys: string[]) {
     selectedKeys.value = [...keys]
+    lastSelectedHash.value = keys[keys.length - 1]
   }
   // 切换选中
   function toggleSelectedKey(key: string) {
     if (selectedKeys.value.includes(key)) {
       selectedKeys.value = selectedKeys.value.filter((k) => k !== key)
+      lastSelectedHash.value = selectedKeys.value[selectedKeys.value.length - 1]
     } else {
       selectedKeys.value = [...selectedKeys.value, key]
+      lastSelectedHash.value = key
     }
   }
   // 清空选中

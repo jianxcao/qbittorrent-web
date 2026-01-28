@@ -59,7 +59,6 @@ function onContextMenu(e: MouseEvent) {
     // Right click selection logic
     if (!torrentStore.selectedKeys.includes(torrent.hash)) {
       torrentStore.setSelectedKeys([torrent.hash])
-      torrentStore.setLastSelectedHash(torrent.hash)
     }
   }
 }
@@ -154,9 +153,9 @@ function getRowBgColors(params: { isSelected: boolean; isHover: boolean; isEven:
 
 function attachRowEvents(rowGroup: Group, rowIndex: number) {
   rowGroup.on('tap', (e: any) => {
-    console.debug('tap triggered')
     handleRowClick(rowIndex, e)
   })
+
   rowGroup.on('long_press', (e: any) => {
     const torrents = torrentStore.filterTorrents
     if (rowIndex < 0 || rowIndex >= torrents.length || containerRef.value === undefined) {
@@ -171,7 +170,6 @@ function attachRowEvents(rowGroup: Group, rowIndex: number) {
       // Right click selection logic
       if (!torrentStore.selectedKeys.includes(torrent.hash)) {
         torrentStore.setSelectedKeys([torrent.hash])
-        torrentStore.setLastSelectedHash(torrent.hash)
       }
     }
   })
@@ -416,7 +414,6 @@ function handleRowClick(rowIndex: number, e: any) {
       torrentStore.selectRange(rowIndex)
     } else {
       torrentStore.toggleSelectedKey(torrent.hash)
-      torrentStore.setLastSelectedHash(torrent.hash)
     }
   } finally {
     // 使用 requestAnimationFrame 确保渲染完成后才允许下次点击
