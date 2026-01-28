@@ -1,117 +1,160 @@
 <template>
-  <div class="file-tree-table h-full flex flex-col">
-    <!-- 表头 -->
-    <div class="table-header" :style="{ gridTemplateColumns }">
-      <div class="header-cell checkbox-cell">
-        <n-checkbox
-          :checked="globalCheckState.checked"
-          :indeterminate="globalCheckState.indeterminate"
-          @update:checked="handleGlobalCheckChange"
-        />
-      </div>
-      <div class="header-cell name-cell">
-        <span>{{ t('torrentDetail.content.name') }}</span>
-      </div>
-      <div class="header-cell size-cell">
-        <span>{{ t('torrentDetail.content.size') }}</span>
-      </div>
-      <div class="header-cell progress-cell">
-        <span>{{ t('torrentDetail.content.progress') }}</span>
-      </div>
-      <div class="header-cell priority-cell">
-        <span>{{ t('torrentDetail.content.priority') }}</span>
-      </div>
-      <div class="header-cell remaining-cell">
-        <span>{{ t('torrentDetail.content.remaining') }}</span>
-      </div>
-      <div class="header-cell availability-cell">
-        <span>{{ t('torrentDetail.content.availability') }}</span>
-      </div>
-    </div>
-
-    <!-- 表体 -->
-    <div ref="tableBodyRef" class="table-body">
-      <div
-        v-for="node in visibleNodes"
-        :key="node.rowId"
-        class="table-row"
-        :style="{ gridTemplateColumns }"
-        @contextmenu.prevent="handleRowContextMenu(node, $event)"
-      >
-        <!-- 复选框列 -->
-        <div class="table-cell checkbox-cell">
+  <div ref="tableContainerRef" class="file-tree-table h-full">
+    <!-- 滚动容器 -->
+    <div ref="tableBodyRef" class="table-scroll-container">
+      <!-- 表头 -->
+      <div class="table-header" :style="{ gridTemplateColumns, minWidth: tableMinWidth }">
+        <div class="header-cell checkbox-cell">
           <n-checkbox
-            :checked="node.checked === TriState.Checked"
-            :indeterminate="node.checked === TriState.Partial"
-            @update:checked="(checked) => handleCheckboxChange(node, checked)"
+            :checked="globalCheckState.checked"
+            :indeterminate="globalCheckState.indeterminate"
+            @update:checked="handleGlobalCheckChange"
           />
         </div>
+        <div class="header-cell name-cell">
+          <span>{{ t('torrentDetail.content.name') }}</span>
+          <ResizeLine
+            v-model:container-width="columnWidths[0]"
+            :min-container-width="120"
+            :max-container-width="600"
+            :line-width="3"
+            class="column-resizer"
+            @update:container-width="onColumnResize(0)"
+          />
+        </div>
+        <div class="header-cell size-cell">
+          <span>{{ t('torrentDetail.content.size') }}</span>
+          <ResizeLine
+            v-model:container-width="columnWidths[1]"
+            :min-container-width="80"
+            :max-container-width="200"
+            :line-width="3"
+            class="column-resizer"
+            @update:container-width="onColumnResize(1)"
+          />
+        </div>
+        <div class="header-cell progress-cell">
+          <span>{{ t('torrentDetail.content.progress') }}</span>
+          <ResizeLine
+            v-model:container-width="columnWidths[2]"
+            :min-container-width="100"
+            :max-container-width="300"
+            :line-width="3"
+            class="column-resizer"
+            @update:container-width="onColumnResize(2)"
+          />
+        </div>
+        <div class="header-cell priority-cell">
+          <span>{{ t('torrentDetail.content.priority') }}</span>
+          <ResizeLine
+            v-model:container-width="columnWidths[3]"
+            :min-container-width="100"
+            :max-container-width="200"
+            :line-width="3"
+            class="column-resizer"
+            @update:container-width="onColumnResize(3)"
+          />
+        </div>
+        <div class="header-cell remaining-cell">
+          <span>{{ t('torrentDetail.content.remaining') }}</span>
+          <ResizeLine
+            v-model:container-width="columnWidths[4]"
+            :min-container-width="80"
+            :max-container-width="200"
+            :line-width="3"
+            class="column-resizer"
+            @update:container-width="onColumnResize(4)"
+          />
+        </div>
+        <div class="header-cell availability-cell">
+          <span>{{ t('torrentDetail.content.availability') }}</span>
+        </div>
+      </div>
 
-        <!-- 名称列 -->
-        <div class="table-cell name-cell">
-          <div class="name-content" :style="{ marginLeft: `${node.depth * 16}px` }">
-            <!-- 折叠图标 -->
-            <n-icon
-              v-if="node.isFolder"
-              class="collapse-icon"
-              :class="{ collapsed: isCollapsed(node.rowId) }"
-              size="16"
-              @click.stop="toggleCollapse(node.rowId)"
-            >
-              <ChevronDownIcon />
-            </n-icon>
-            <span v-else class="icon-placeholder"></span>
-
-            <!-- 文件夹/文件图标 -->
-            <n-icon v-if="node.isFolder" class="folder-icon" size="16">
-              <FolderIcon />
-            </n-icon>
-            <n-icon v-else class="file-icon" size="16">
-              <DocumentIcon />
-            </n-icon>
-
-            <!-- 文件名 -->
-            <span class="file-name" :title="node.name">{{ node.name }}</span>
+      <!-- 表体内容 -->
+      <div class="table-content" :style="{ minWidth: tableMinWidth }">
+        <div
+          v-for="node in visibleNodes"
+          :key="node.rowId"
+          class="table-row"
+          :style="{ gridTemplateColumns }"
+          @contextmenu.prevent="handleRowContextMenu(node, $event)"
+        >
+          <!-- 复选框列 -->
+          <div class="table-cell checkbox-cell">
+            <n-checkbox
+              :checked="node.checked === TriState.Checked"
+              :indeterminate="node.checked === TriState.Partial"
+              @update:checked="(checked) => handleCheckboxChange(node, checked)"
+            />
           </div>
-        </div>
 
-        <!-- 大小列 -->
-        <div class="table-cell size-cell">
-          {{ formatSize(node.size) }}
-        </div>
+          <!-- 名称列 -->
+          <div class="table-cell name-cell">
+            <div class="name-content" :style="{ marginLeft: `${node.depth * 16}px` }">
+              <!-- 折叠图标 -->
+              <n-icon
+                v-if="node.isFolder"
+                class="collapse-icon"
+                :class="{ collapsed: isCollapsed(node.rowId) }"
+                size="16"
+                @click.stop="toggleCollapse(node.rowId)"
+              >
+                <ChevronDownIcon />
+              </n-icon>
+              <span v-else class="icon-placeholder"></span>
 
-        <!-- 进度列 -->
-        <div class="table-cell progress-cell">
-          <n-progress
-            type="line"
-            :percentage="Number(node.progress.toFixed(2))"
-            :show-indicator="false"
-            :height="6"
-            :color="themeVars.primaryColor"
-            :rail-color="changeColor(themeVars.primaryColor, { alpha: 0.2 })"
-          />
-          <span class="progress-text">{{ node.progress.toFixed(1) }}%</span>
-        </div>
+              <!-- 文件夹/文件图标 -->
+              <n-icon v-if="node.isFolder" class="folder-icon" size="16">
+                <FolderIcon />
+              </n-icon>
+              <n-icon v-else class="file-icon" size="16">
+                <DocumentIcon />
+              </n-icon>
 
-        <!-- 优先级列 -->
-        <div class="table-cell priority-cell">
-          <n-select
-            :value="node.priority"
-            :options="priorityOptions"
-            :disabled="node.priority === FilePriority.Mixed"
-            size="small"
-            @update:value="(value) => handlePriorityChange(node, value)"
-          />
-        </div>
+              <!-- 文件名 -->
+              <span class="file-name" :title="node.name">{{ node.name }}</span>
+            </div>
+          </div>
 
-        <!-- 剩余列 -->
-        <div class="table-cell remaining-cell">
-          {{ formatSize(node.remaining) }}
-        </div>
+          <!-- 大小列 -->
+          <div class="table-cell size-cell">
+            {{ formatSize(node.size) }}
+          </div>
 
-        <!-- 可用性列 -->
-        <div class="table-cell availability-cell">
-          {{ node.availability.toFixed(3) }}
+          <!-- 进度列 -->
+          <div class="table-cell progress-cell">
+            <n-progress
+              type="line"
+              :percentage="Number(node.progress.toFixed(2))"
+              :show-indicator="false"
+              :height="6"
+              :color="themeVars.primaryColor"
+              :rail-color="changeColor(themeVars.primaryColor, { alpha: 0.2 })"
+            />
+            <span class="progress-text">{{ node.progress.toFixed(1) }}%</span>
+          </div>
+
+          <!-- 优先级列 -->
+          <div class="table-cell priority-cell">
+            <n-select
+              :value="node.priority"
+              :options="priorityOptions"
+              :disabled="node.priority === FilePriority.Mixed"
+              size="small"
+              @update:value="(value) => handlePriorityChange(node, value)"
+            />
+          </div>
+
+          <!-- 剩余列 -->
+          <div class="table-cell remaining-cell">
+            {{ formatSize(node.remaining) }}
+          </div>
+
+          <!-- 可用性列 -->
+          <div class="table-cell availability-cell">
+            {{ node.availability.toFixed(3) }}
+          </div>
         </div>
       </div>
     </div>
@@ -138,12 +181,14 @@ import { ref, computed, watch } from 'vue'
 import { NCheckbox, NProgress, NSelect, NIcon, NDropdown, useThemeVars, useMessage } from 'naive-ui'
 import { ChevronDown as ChevronDownIcon, Folder as FolderIcon, Document as DocumentIcon } from '@vicons/ionicons5'
 import { changeColor } from 'seemly'
+import { useResizeObserver } from '@vueuse/core'
 import { useI18n } from '@/composables/useI18n'
 import { useFileTree } from '@/composables/useFileTree'
 import { formatSize } from '@/utils'
 import { setFilePriority } from '@/api/modules/torrents'
 import { FilePriority, TriState, type FileNode, type FolderNode } from '@/utils/file-tree'
 import type { TorrentFile } from '@/api/types'
+import ResizeLine from '@/components/ResizeLine.vue'
 import RenameDialog from './RenameDialog.vue'
 
 const props = defineProps<{
@@ -169,8 +214,96 @@ const visibleNodes = computed(() => {
   return getVisibleNodes(rootNode.value)
 })
 
+// 容器宽度监听
+const tableContainerRef = ref<HTMLElement | null>(null)
+const tableWidth = ref(0)
+
+useResizeObserver(tableContainerRef, (entries) => {
+  const entry = entries[0]
+  if (entry) {
+    tableWidth.value = entry.contentRect.width
+  }
+})
+
+// 列宽度管理
+const columnWidths = ref<number[]>([])
+const manualWidthKeys = ref<Set<number>>(new Set())
+
+// 列配置：[minWidth, defaultWidth]
+const columnConfigs = [
+  { key: 'name', minWidth: 120, defaultWidth: 0 }, // 名称列自适应
+  { key: 'size', minWidth: 80, defaultWidth: 100 },
+  { key: 'progress', minWidth: 100, defaultWidth: 150 },
+  { key: 'priority', minWidth: 100, defaultWidth: 140 },
+  { key: 'remaining', minWidth: 80, defaultWidth: 100 },
+  { key: 'availability', minWidth: 60, defaultWidth: 80 }
+]
+
+// 监听容器宽度变化，计算列宽
+watch(
+  () => tableWidth.value,
+  (width) => {
+    if (width === 0) {
+      return
+    }
+
+    const checkboxWidth = 50
+    const availableWidth = Math.max(0, width - checkboxWidth)
+
+    const nextWidths: number[] = []
+    let fixedWidth = 0
+    const flexibleIndexes: number[] = []
+
+    columnConfigs.forEach((config, index) => {
+      const currentWidth = columnWidths.value[index]
+      const isManual = manualWidthKeys.value.has(index)
+
+      // 如果用户手动调整过，保持用户设置的宽度
+      if (isManual && typeof currentWidth === 'number') {
+        nextWidths[index] = Math.max(config.minWidth, currentWidth)
+        fixedWidth += nextWidths[index]
+      } else if (config.defaultWidth > 0) {
+        // 有默认宽度的列
+        nextWidths[index] = Math.max(config.minWidth, config.defaultWidth)
+        fixedWidth += nextWidths[index]
+      } else {
+        // 自适应列（名称列）
+        flexibleIndexes.push(index)
+      }
+    })
+
+    // 分配剩余空间给自适应列
+    const remainingWidth = Math.max(0, availableWidth - fixedWidth)
+    const flexWidth = flexibleIndexes.length > 0 ? remainingWidth / flexibleIndexes.length : 0
+
+    flexibleIndexes.forEach((index) => {
+      nextWidths[index] = Math.max(columnConfigs[index].minWidth, flexWidth)
+    })
+
+    columnWidths.value = nextWidths
+  },
+  { immediate: true }
+)
+
 // 表格列配置
-const gridTemplateColumns = '50px 1fr 100px 150px 140px 100px 80px'
+const gridTemplateColumns = computed(() => {
+  const columns = columnWidths.value.map((width) => `${width}px`)
+  return `50px ${columns.join(' ')}`
+})
+
+// 计算表格最小宽度
+const tableMinWidth = computed(() => {
+  const checkboxWidth = 50
+  const columnsWidth = columnWidths.value.reduce((total, width) => total + width, 0)
+  return `${checkboxWidth + columnsWidth}px`
+})
+
+/**
+ * 处理列宽度调整
+ */
+const onColumnResize = (index: number) => {
+  manualWidthKeys.value.add(index)
+}
 
 // 优先级选项
 const priorityOptions = computed(() => [
@@ -333,7 +466,16 @@ const handleRenameSuccess = () => {
 
 .file-tree-table {
   color: var(--text-color-2);
-  user-select: none;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.table-scroll-container {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  .scrollbar();
 }
 
 .table-header {
@@ -341,13 +483,15 @@ const handleRenameSuccess = () => {
   align-items: center;
   position: sticky;
   top: 0;
-  z-index: 2;
-  background-color: var(--table-header-color);
+  z-index: 10;
+  user-select: none;
+  background-color: var(--table-color);
   border-bottom: 1px solid var(--border-color);
   min-height: 32px;
 }
 
 .header-cell {
+  position: relative;
   padding: 6px 8px;
   font-size: 12px;
   font-weight: 600;
@@ -355,17 +499,18 @@ const handleRenameSuccess = () => {
   display: flex;
   align-items: center;
   border-right: 1px solid var(--border-color);
+  min-width: 0;
 
   &:last-child {
     border-right: none;
   }
 }
 
-.table-body {
-  flex: 1;
-  min-height: 0;
-  overflow: auto;
-  .scrollbar();
+.column-resizer {
+  position: absolute;
+  right: -2px;
+  top: 0;
+  height: 100%;
 }
 
 .table-row {
