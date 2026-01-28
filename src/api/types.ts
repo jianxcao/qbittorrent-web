@@ -421,6 +421,7 @@ export interface AppPreferences {
 
 // 传输信息
 export interface TransferInfo {
+  free_space_on_disk: number // 磁盘剩余空间
   dl_info_speed: number // 全局下载速度
   dl_info_data: number // 本次会话下载量
   up_info_speed: number // 全局上传速度

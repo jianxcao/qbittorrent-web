@@ -142,6 +142,15 @@ const allTags = computed(() => [
     }),
     type: 'info' as const
   },
+  {
+    text: $t('statusBar.diskSize', {
+      size:
+        Number(serverState.value.free_space_on_disk) < 0
+          ? $t('statusBar.unknown')
+          : formatSize(serverState.value.free_space_on_disk)
+    }),
+    type: 'info' as const
+  },
   { text: $t('statusBar.totalSize', { size: formatSize(totalSize.value) }), type: 'info' as const },
   ...(selectedSize.value > 0
     ? [{ text: $t('statusBar.selectedSize', { size: formatSize(selectedSize.value) }), type: 'info' as const }]

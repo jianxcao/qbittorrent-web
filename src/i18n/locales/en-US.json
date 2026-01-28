@@ -232,7 +232,9 @@
     "toggleSpeedLimit": "Toggle Speed Limit",
     "normalSpeedMode": "Normal Speed",
     "alternativeSpeedMode": "Alternative Speed",
-    "toggleSpeedLimitFailed": "Failed to toggle speed limit mode"
+    "toggleSpeedLimitFailed": "Failed to toggle speed limit mode",
+    "diskSize": "Disk Size: {size}",
+    "unknown": "Unknown"
   },
   "message": {
     "taskStarted": "Tasks started",

@@ -232,7 +232,9 @@
     "toggleSpeedLimit": "切换限速模式",
     "normalSpeedMode": "正常限速",
     "alternativeSpeedMode": "备用限速",
-    "toggleSpeedLimitFailed": "切换限速模式失败"
+    "toggleSpeedLimitFailed": "切换限速模式失败",
+    "diskSize": "磁盘剩余空间: {size}",
+    "unknown": "未知"
   },
   "message": {
     "taskStarted": "已开始任务",
