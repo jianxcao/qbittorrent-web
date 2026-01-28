@@ -59,7 +59,7 @@ function onContextMenu(e: MouseEvent) {
     // Right click selection logic
     if (!torrentStore.selectedKeys.includes(torrent.hash)) {
       torrentStore.setSelectedKeys([torrent.hash])
-      torrentStore.setLastSelectedIndex(rowIndex)
+      torrentStore.setLastSelectedHash(torrent.hash)
     }
   }
 }
@@ -171,7 +171,7 @@ function attachRowEvents(rowGroup: Group, rowIndex: number) {
       // Right click selection logic
       if (!torrentStore.selectedKeys.includes(torrent.hash)) {
         torrentStore.setSelectedKeys([torrent.hash])
-        torrentStore.setLastSelectedIndex(rowIndex)
+        torrentStore.setLastSelectedHash(torrent.hash)
       }
     }
   })
@@ -416,7 +416,7 @@ function handleRowClick(rowIndex: number, e: any) {
       torrentStore.selectRange(rowIndex)
     } else {
       torrentStore.toggleSelectedKey(torrent.hash)
-      torrentStore.setLastSelectedIndex(rowIndex)
+      torrentStore.setLastSelectedHash(torrent.hash)
     }
   } finally {
     // 使用 requestAnimationFrame 确保渲染完成后才允许下次点击

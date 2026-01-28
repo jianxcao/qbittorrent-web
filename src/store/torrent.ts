@@ -171,8 +171,8 @@ export const useTorrentStore = defineStore('torrent', () => {
     toggleSelectedKey,
     clearSelectedKeys,
     selectRange,
-    lastSelectedIndex,
-    setLastSelectedIndex
+    lastSelectedHash,
+    setLastSelectedHash
   } = useSelection(() => filterTorrents.value)
 
   async function fetchTorrents() {
@@ -224,9 +224,9 @@ export const useTorrentStore = defineStore('torrent', () => {
             if (data.tags !== undefined && data.tags !== existing.tags) {
               const tagsArray = data.tags
                 ? data.tags
-                    .split(',')
-                    .map((t) => t.trim())
-                    .filter((t) => t)
+                  .split(',')
+                  .map((t) => t.trim())
+                  .filter((t) => t)
                 : []
               updates[hash].tagsArray = tagsArray
             }
@@ -332,13 +332,13 @@ export const useTorrentStore = defineStore('torrent', () => {
   }
 
 
-  const interval = computed(() => settingStore.setting.polling.torrentInterval * 1000)
+  const interval = computed(() => settingStore.setting.polling.torrentInterval * 10000000)
   const { pause: stopPolling, resume: startPolling } = useIntervalFn(fetchTorrents, interval, { immediate: false })
 
   watch([search, statusFilter, tagsFilter, trackerFilter, errorStringFilter, downloadDirFilter, categoryFilter], () => {
     clearSelectedKeys()
   })
-  ;(window as any).torrents = torrents
+    ; (window as any).torrents = torrents
   return {
     getColumnTitle,
     torrents,
@@ -364,8 +364,8 @@ export const useTorrentStore = defineStore('torrent', () => {
     toggleSelectedKey,
     clearSelectedKeys,
     selectRange,
-    lastSelectedIndex,
-    setLastSelectedIndex,
+    lastSelectedHash,
+    setLastSelectedHash,
     startPolling,
     stopPolling,
     columns,

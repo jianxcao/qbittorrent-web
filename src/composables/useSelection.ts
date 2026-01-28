@@ -3,8 +3,9 @@ import { ref, computed } from 'vue'
 // 通用 选中逻辑，负责选中行
 // 支持 hash (string) 作为唯一标识符
 export function useSelection<T extends { hash: string }>(items: () => T[]) {
+  console.debug('useSelection', items())
   const selectedKeys = ref<string[]>([])
-  const lastSelectedIndex = ref<number | null>(null)
+  const lastSelectedHash = ref<string | null>(null)
   const mapSelectedKeys = computed(() =>
     selectedKeys.value.reduce(
       (acc, hash) => {
@@ -29,25 +30,30 @@ export function useSelection<T extends { hash: string }>(items: () => T[]) {
   // 清空选中
   function clearSelectedKeys() {
     selectedKeys.value = []
-    lastSelectedIndex.value = null
+    lastSelectedHash.value = null
   }
   // 选中范围
   function selectRange(currentIndex: number) {
-    if (lastSelectedIndex.value === null) {
-      selectedKeys.value = [items()[currentIndex]?.hash]
-      lastSelectedIndex.value = currentIndex
+    let latestIndex = -1
+    const currentItems = items()
+    if (lastSelectedHash.value) {
+      latestIndex = currentItems.findIndex((t) => t.hash === lastSelectedHash.value)
+    }
+    if (latestIndex == -1) {
+      selectedKeys.value = [currentItems[currentIndex]?.hash]
+      latestIndex = currentIndex
       return
     }
-    const start = Math.min(lastSelectedIndex.value, currentIndex)
-    const end = Math.max(lastSelectedIndex.value, currentIndex)
-    const rangeHashes = items()
+    const start = Math.min(latestIndex, currentIndex)
+    const end = Math.max(latestIndex, currentIndex)
+    const rangeHashes = currentItems
       .slice(start, end + 1)
       .map((t) => t.hash)
     selectedKeys.value = rangeHashes
   }
 
-  function setLastSelectedIndex(idx: number) {
-    lastSelectedIndex.value = idx
+  function setLastSelectedHash(hash: string) {
+    lastSelectedHash.value = hash
   }
 
   return {
@@ -57,7 +63,7 @@ export function useSelection<T extends { hash: string }>(items: () => T[]) {
     toggleSelectedKey,
     clearSelectedKeys,
     selectRange,
-    lastSelectedIndex,
-    setLastSelectedIndex
+    lastSelectedHash,
+    setLastSelectedHash
   }
 }
