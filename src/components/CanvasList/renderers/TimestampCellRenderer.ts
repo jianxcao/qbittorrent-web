@@ -2,6 +2,7 @@ import type { CellRenderer, CellRenderContext } from '../types'
 import { Text } from 'leafer-ui'
 import type { Group } from 'leafer-ui'
 import { formatTimestamp } from '@/utils'
+import { FONT_FAMILY } from '../constant'
 
 /**
  * 时间戳单元格渲染器
@@ -40,7 +41,8 @@ export class TimestampCellRenderer implements CellRenderer {
       width: width - padding * 2,
       height: height,
       overflow: 'hide' as any,
-      textOverflow: 'ellipsis'
+      textOverflow: 'ellipsis',
+      fontFamily: FONT_FAMILY
     } as any)
 
     leaferGroup.add(textElement)

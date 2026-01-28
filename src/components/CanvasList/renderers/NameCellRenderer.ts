@@ -16,6 +16,7 @@ import stopCircleSvg from '@/assets/icons/stopCircle.svg?raw' // 停止
 import dismissSquareSvg from '@/assets/icons/dismissSquare.svg?raw' // 错误
 import swapVerticalSvg from '@/assets/icons/swapVertical.svg?raw' // 移动
 import alertCircleSvg from '@/assets/icons/alertCircle.svg?raw' // 未知
+import { FONT_FAMILY } from '../constant'
 
 /**
  * 将 SVG 字符串转换为带颜色的 Data URL
@@ -162,7 +163,8 @@ export class NameCellRenderer implements CellRenderer {
       width: textWidth,
       height: height,
       overflow: 'hide' as any,
-      textOverflow: 'ellipsis'
+      textOverflow: 'ellipsis',
+      fontFamily: FONT_FAMILY
     } as any)
 
     leaferGroup.add(textElement)

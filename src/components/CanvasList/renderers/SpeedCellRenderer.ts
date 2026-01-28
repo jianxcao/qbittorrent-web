@@ -2,6 +2,7 @@ import type { CellRenderer, CellRenderContext } from '../types'
 import { Text } from 'leafer-ui'
 import type { Group } from 'leafer-ui'
 import { formatSpeed } from '@/utils'
+import { FONT_FAMILY } from '../constant'
 
 /**
  * 速度单元格渲染器
@@ -32,7 +33,8 @@ export class SpeedCellRenderer implements CellRenderer {
       verticalAlign: 'middle',
       width: width - padding * 2,
       height: height,
-      overflow: 'hide' as any
+      overflow: 'hide' as any,
+      fontFamily: FONT_FAMILY
     } as any)
 
     leaferGroup.add(textElement)

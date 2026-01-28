@@ -1,6 +1,7 @@
 import type { CellRenderer, CellRenderContext } from '../types'
 import { Text } from 'leafer-ui'
 import type { Group } from 'leafer-ui'
+import { FONT_FAMILY } from '../constant'
 
 /**
  * 格式化时长（支持年、天、时、分、秒）
@@ -78,7 +79,8 @@ export class DurationCellRenderer implements CellRenderer {
       width: width - padding * 2,
       height: height,
       overflow: 'hide' as any,
-      textOverflow: 'ellipsis'
+      textOverflow: 'ellipsis',
+      fontFamily: FONT_FAMILY
     } as any)
 
     leaferGroup.add(textElement)

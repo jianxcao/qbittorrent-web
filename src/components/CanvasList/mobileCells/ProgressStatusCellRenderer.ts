@@ -4,6 +4,7 @@ import { MOBILE_CELL_SPACING } from '../mobileConstants'
 import { qbStateIconMap } from '@/const/status'
 import type { QBTorrentState } from '@/api/types'
 import { i18n } from '@/i18n'
+import { FONT_FAMILY } from '../constant'
 
 /**
  * 进度状态 Cell 渲染器
@@ -121,7 +122,8 @@ class ProgressStatusCellRenderer implements MobileCellRenderer {
       fontSize: 13,
       fontWeight: '500',
       textAlign: 'right',
-      verticalAlign: 'middle'
+      verticalAlign: 'middle',
+      fontFamily: FONT_FAMILY
     })
     group.add(text)
   }
@@ -173,7 +175,8 @@ class ProgressStatusCellRenderer implements MobileCellRenderer {
       fontWeight: '500',
       textAlign: 'center',
       verticalAlign: 'middle',
-      textOverflow: 'ellipsis'
+      textOverflow: 'ellipsis',
+      fontFamily: FONT_FAMILY
     } as any)
     group.add(tagText)
   }

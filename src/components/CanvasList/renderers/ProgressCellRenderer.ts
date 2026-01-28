@@ -1,6 +1,7 @@
 import type { CellRenderer, CellRenderContext } from '../types'
 import { Rect, Text } from 'leafer-ui'
 import type { Group } from 'leafer-ui'
+import { FONT_FAMILY } from '../constant'
 
 /**
  * 进度条单元格渲染器
@@ -63,7 +64,8 @@ export class ProgressCellRenderer implements CellRenderer {
       textAlign: 'center',
       verticalAlign: 'middle',
       height: height,
-      fontWeight: 'bold'
+      fontWeight: 'bold',
+      fontFamily: FONT_FAMILY
     })
     leaferGroup.add(textElement)
   }

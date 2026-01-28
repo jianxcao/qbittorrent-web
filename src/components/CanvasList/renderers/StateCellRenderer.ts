@@ -4,6 +4,7 @@ import type { Group } from 'leafer-ui'
 import { qbStateIconMap } from '@/const/status'
 import type { QBTorrentState } from '@/api/types'
 import { i18n } from '@/i18n'
+import { FONT_FAMILY } from '../constant'
 
 /**
  * 将具体状态映射到 statusFilter 分类
@@ -95,7 +96,8 @@ export class StateCellRenderer implements CellRenderer {
       width: width - padding * 2,
       height: height,
       overflow: 'hide' as any,
-      textOverflow: 'ellipsis'
+      textOverflow: 'ellipsis',
+      fontFamily: FONT_FAMILY
     } as any)
 
     leaferGroup.add(textElement)

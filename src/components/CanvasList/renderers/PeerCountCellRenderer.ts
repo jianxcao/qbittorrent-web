@@ -2,6 +2,7 @@ import type { CellRenderer, CellRenderContext } from '../types'
 import { Text } from 'leafer-ui'
 import type { Group } from 'leafer-ui'
 import type { Torrent } from '@/api/types'
+import { FONT_FAMILY } from '../constant'
 
 /**
  * Peer 数量单元格渲染器
@@ -56,7 +57,8 @@ export class PeerCountCellRenderer implements CellRenderer {
       verticalAlign: 'middle',
       width: width - padding * 2,
       height: height,
-      overflow: 'hide' as any
+      overflow: 'hide' as any,
+      fontFamily: FONT_FAMILY
     } as any)
 
     leaferGroup.add(textElement)

@@ -1,6 +1,7 @@
 import type { CellRenderer, CellRenderContext, TextRendererOptions } from '../types'
 import { Text } from 'leafer-ui'
 import type { Group } from 'leafer-ui'
+import { FONT_FAMILY } from '../constant'
 
 /**
  * 文本单元格渲染器
@@ -46,7 +47,8 @@ export class TextCellRenderer implements CellRenderer {
       width: textWidth,
       height: height,
       overflow: 'hide' as any,
-      textOverflow: this.options.ellipsis ? 'ellipsis' : 'clip'
+      textOverflow: this.options.ellipsis ? 'ellipsis' : 'clip',
+      fontFamily: FONT_FAMILY
     } as any)
 
     leaferGroup.add(textElement)

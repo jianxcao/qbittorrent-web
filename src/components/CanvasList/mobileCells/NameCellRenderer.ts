@@ -2,6 +2,7 @@ import type { MobileCellRenderer, MobileCellRenderContext } from '../mobileTypes
 import { Text, Ellipse, Group, Rect } from 'leafer-ui'
 import { MENU_BUTTON_SIZE, MENU_BUTTON_MARGIN, MOBILE_CELL_SPACING } from '../mobileConstants'
 import { measureTextWidth } from '@/utils'
+import { FONT_FAMILY } from '../constant'
 
 /**
  * 名称 Cell 渲染器
@@ -46,7 +47,8 @@ class NameCellRenderer implements MobileCellRenderer {
       lineHeight: 24,
       textWrap: 'break',
       overflow: 'hide',
-      textOverflow: 'ellipsis'
+      textOverflow: 'ellipsis',
+      fontFamily: FONT_FAMILY
     } as any)
 
     group.add(nameText)
@@ -101,7 +103,8 @@ class NameCellRenderer implements MobileCellRenderer {
       width: textContentWidth,
       height: tagHeight,
       overflow: 'hide' as any,
-      textOverflow: 'ellipsis'
+      textOverflow: 'ellipsis',
+      fontFamily: FONT_FAMILY
     } as any)
     group.add(tagText)
   }

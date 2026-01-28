@@ -1,6 +1,7 @@
 import type { CellRenderer, CellRenderContext } from '../types'
 import { Text } from 'leafer-ui'
 import type { Group } from 'leafer-ui'
+import { FONT_FAMILY } from '../constant'
 
 /**
  * 可用性单元格渲染器
@@ -40,7 +41,8 @@ export class AvailabilityCellRenderer implements CellRenderer {
       verticalAlign: 'middle',
       width: width - padding * 2,
       height: height,
-      overflow: 'hide' as any
+      overflow: 'hide' as any,
+      fontFamily: FONT_FAMILY
     } as any)
 
     leaferGroup.add(textElement)

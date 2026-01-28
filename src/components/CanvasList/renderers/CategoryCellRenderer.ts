@@ -1,6 +1,7 @@
 import type { CellRenderer, CellRenderContext } from '../types'
 import { Text, Rect, Group } from 'leafer-ui'
 import type { Group as LeaferGroup } from 'leafer-ui'
+import { FONT_FAMILY } from '../constant'
 
 /**
  * Category 标签单元格渲染器
@@ -30,7 +31,8 @@ export class CategoryCellRenderer implements CellRenderer {
     const tempText = new Text({
       text: textValue,
       fontSize: 13,
-      fontWeight: 'normal'
+      fontWeight: 'normal',
+      fontFamily: FONT_FAMILY
     })
     const textMetrics = tempText.getBounds('box')
     const textWidth = textMetrics.width
@@ -81,7 +83,8 @@ export class CategoryCellRenderer implements CellRenderer {
       height: tagHeight,
       overflow: 'hide' as any,
       textOverflow: 'ellipsis',
-      textWrap: 'none'
+      textWrap: 'none',
+      fontFamily: FONT_FAMILY
     } as any)
     tagGroup.add(tagText)
 

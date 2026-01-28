@@ -1,6 +1,7 @@
 import type { MobileCellRenderer, MobileCellRenderContext } from '../mobileTypes'
-import { Text } from 'leafer-ui'
+import { Group, Rect, Text } from 'leafer-ui'
 import { formatTimestamp } from '@/utils'
+import { FONT_FAMILY } from '../constant'
 
 /**
  * 日期信息 Cell 渲染器
@@ -15,37 +16,54 @@ class DateInfoCellRenderer implements MobileCellRenderer {
 
   render(ctx: MobileCellRenderContext, group: any): void {
     const { row, x, y, width, theme } = ctx
-
     // 格式化日期
     const addedDate = formatTimestamp(row.added_on)
     const completionDate = formatTimestamp(row.completion_on)
 
     const fontSize = 12
     const textColor = theme.textColor3
+    const height = 20
+
+    // 计算左右两列的宽度（各占一半，中间留一点间距）
+    const columnWidth = width / 2
+
+    // 创建日期分组容器
+    const dateGroup = new Group({
+      x: x,
+      y: y,
+    })
 
     // 左侧：创建日期
     const addedText = new Text({
       text: addedDate,
-      x: x,
-      y: y,
+      x: 0,
+      y: 0,
+      width: columnWidth,
+      height: height,
       fill: textColor,
       fontSize: fontSize,
       textAlign: 'left',
-      verticalAlign: 'top'
+      verticalAlign: 'top',
+      fontFamily: FONT_FAMILY
     })
-    group.add(addedText)
+    dateGroup.add(addedText)
 
     // 右侧：完成时间
     const completionText = new Text({
       text: completionDate,
-      x: x + width,
-      y: y,
+      x: columnWidth,
+      y: 0,
+      width: columnWidth,
+      height: height,
       fill: textColor,
       fontSize: fontSize,
       textAlign: 'right',
-      verticalAlign: 'top'
+      verticalAlign: 'top',
+      fontFamily: FONT_FAMILY
     })
-    group.add(completionText)
+    dateGroup.add(completionText)
+
+    group.add(dateGroup)
   }
 }
 

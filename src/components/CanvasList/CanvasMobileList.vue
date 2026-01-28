@@ -341,7 +341,8 @@ onMounted(() => {
     leafer = new Leafer({
       view: containerRef.value,
       width: actualWidth.value,
-      height: props.listHeight - TOOLBAR_HEIGHT
+      height: props.listHeight - TOOLBAR_HEIGHT,
+      mobile: true
     })
 
     // 创建内容组（随滚动平移）

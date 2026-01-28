@@ -2,6 +2,7 @@ import type { MobileCellRenderer, MobileCellRenderContext } from '../mobileTypes
 import { Text } from 'leafer-ui'
 import { formatSpeed, formatSize } from '@/utils'
 import { MOBILE_CELL_SPACING } from '../mobileConstants'
+import { FONT_FAMILY } from '../constant'
 
 /**
  * 下载信息 Cell 渲染器
@@ -39,7 +40,8 @@ class DownloadInfoCellRenderer implements MobileCellRenderer {
       fill: textColor,
       fontSize: fontSize,
       textAlign: 'left',
-      verticalAlign: 'top'
+      verticalAlign: 'top',
+      fontFamily: FONT_FAMILY
     })
     group.add(iconText)
 
@@ -52,7 +54,8 @@ class DownloadInfoCellRenderer implements MobileCellRenderer {
       fill: textColor,
       fontSize: fontSize,
       textAlign: 'right',
-      verticalAlign: 'top'
+      verticalAlign: 'top',
+      fontFamily: FONT_FAMILY
     })
     group.add(speedText)
 
@@ -65,7 +68,8 @@ class DownloadInfoCellRenderer implements MobileCellRenderer {
       fill: textColor,
       fontSize: fontSize,
       textAlign: 'right',
-      verticalAlign: 'top'
+      verticalAlign: 'top',
+      fontFamily: FONT_FAMILY
     })
     group.add(sizeText)
 
@@ -78,7 +82,8 @@ class DownloadInfoCellRenderer implements MobileCellRenderer {
       fill: textColor,
       fontSize: fontSize,
       textAlign: 'right',
-      verticalAlign: 'top'
+      verticalAlign: 'top',
+      fontFamily: FONT_FAMILY
     })
     group.add(selectedText)
   }
