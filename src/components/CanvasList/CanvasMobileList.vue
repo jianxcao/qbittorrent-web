@@ -232,12 +232,14 @@ function handleCardClick(rowIndex: number, e: any) {
     return
   }
   const torrent = torrents[rowIndex]
-  // 普通点击：选中/取消选中
-  if (e.shiftKey) {
-    torrentStore.selectRange(rowIndex)
-  } else {
-    torrentStore.toggleSelectedKey(torrent.hash)
-  }
+  // 普通点击：选中/取消选中 移动端 card 不处理鼠标
+  // if (e.shiftKey) {
+  //   torrentStore.selectRange(rowIndex)
+  // } else {
+  //   torrentStore.toggleSelectedKey(torrent.hash)
+  // }
+  console.debug('handleCardClick', e, torrent.hash)
+  torrentStore.toggleSelectedKey(torrent.hash)
 }
 
 /**

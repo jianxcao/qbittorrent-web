@@ -42,10 +42,10 @@ const containerRef = ref<HTMLElement>()
 const { width: containerWidth } = useElementSize(containerRef)
 
 function onContextMenu(e: MouseEvent) {
-  if (!containerRef.value) {
+  if (!containerRef.value || e.ctrlKey) {
     return
   }
-
+  // console.debug('onContextMenu', e)
   const rect = containerRef.value.getBoundingClientRect()
   const relativeY = e.clientY - rect.top
   const absoluteY = relativeY + props.scrollTop
@@ -151,9 +151,9 @@ function getRowBgColors(params: { isSelected: boolean; isHover: boolean; isEven:
   return { scrollBgColor, stickyBgColor: scrollBgColor }
 }
 
-function attachRowEvents(rowGroup: Group, rowIndex: number) {
+function attachRowEvents(rowGroup: Group, rowIndex: number, isCheckbox: boolean = false) {
   rowGroup.on('tap', (e: any) => {
-    handleRowClick(rowIndex, e)
+    handleRowClick(rowIndex, e, isCheckbox)
   })
 
   rowGroup.on('long_press', (e: any) => {
@@ -244,7 +244,7 @@ function renderStickyRowGroup(params: {
     console.error('Error rendering checkbox:', error)
   }
 
-  attachRowEvents(rowGroup, rowIndex)
+  attachRowEvents(rowGroup, rowIndex, true)
   stickyGroup.add(rowGroup)
 }
 
@@ -389,7 +389,7 @@ function renderVisibleRows() {
 // 处理行点击事件
 // 添加节流保护，防止重渲染过程中丢失点击
 let isHandlingClick = false
-function handleRowClick(rowIndex: number, e: any) {
+function handleRowClick(rowIndex: number, e: any, isCheckbox: boolean = false) {
   // 防止重复处理
   if (isHandlingClick) {
     return
@@ -410,10 +410,17 @@ function handleRowClick(rowIndex: number, e: any) {
     // const isCheckboxClick = toolbarStore.selectMode && clickX < CHECKBOX_WIDTH
     // 点击其他区域：原有逻辑
     // Shift 键范围选择
-    if (e.shiftKey) {
-      torrentStore.selectRange(rowIndex)
-    } else {
+    // 移动端直接开启多选
+    if (e.pointerType === 'touch' || isCheckbox) {
       torrentStore.toggleSelectedKey(torrent.hash)
+    } else {
+      if (e.shiftKey) {
+        torrentStore.selectRange(rowIndex)
+      } else if (e.ctrlKey) {
+        torrentStore.toggleSelectedKey(torrent.hash)
+      } else {
+        torrentStore.setSelectedKeys([torrent.hash])
+      }
     }
   } finally {
     // 使用 requestAnimationFrame 确保渲染完成后才允许下次点击
