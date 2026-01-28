@@ -11,6 +11,16 @@ export const useTorrentDetailStore = defineStore('torrentDetail', () => {
   const settingStore = useSettingStore()
   const torrentStore = useTorrentStore()
 
+  const currentHash = computed(() => {
+    if (torrentStore.lastSelectedHash) {
+      return torrentStore.lastSelectedHash
+    }
+    if (torrentStore.selectedKeys.length === 0) {
+      return null
+    }
+    return torrentStore.selectedKeys[torrentStore.selectedKeys.length - 1] ?? null
+  })
+
   // 详情同步 ID
   const detailRid = ref<number>(0)
 
@@ -34,13 +44,12 @@ export const useTorrentDetailStore = defineStore('torrentDetail', () => {
 
   // 获取详情数据
   async function fetchDetails() {
-    if (torrentStore.selectedKeys.length === 0) {
+    if (!currentHash.value) {
       resetDetails()
       return
     }
 
-    const hash = torrentStore.selectedKeys[0]
-
+    const hash = currentHash.value
     try {
       if (activeDetailTab.value === 'general') {
         const props = await getProperties(hash)
@@ -86,8 +95,11 @@ export const useTorrentDetailStore = defineStore('torrentDetail', () => {
 
   // 监听选中的种子变化，重置详情数据
   watch(
-    () => torrentStore.selectedKeys,
+    currentHash,
     () => {
+      if (!currentHash.value) {
+        return
+      }
       resetDetails()
       // 立即获取新种子的详情
       fetchDetails()
@@ -119,6 +131,7 @@ export const useTorrentDetailStore = defineStore('torrentDetail', () => {
     currentFiles,
     currentPeers,
     detailRid,
+    currentHash,
 
     // 方法
     fetchDetails,

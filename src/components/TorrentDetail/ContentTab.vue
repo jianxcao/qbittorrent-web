@@ -27,7 +27,6 @@ import { NProgress, NSelect, NDropdown, useMessage, useThemeVars } from 'naive-u
 import ResizableGridTable from '@/components/ResizableGridTable/ResizableGridTable.vue'
 import type { ResizableGridColumn } from '@/components/ResizableGridTable/types'
 import { useTorrentDetailStore } from '@/store/torrentDetail'
-import { useTorrentStore } from '@/store/torrent'
 import { computed } from 'vue'
 import { formatSize } from '@/utils'
 import type { TorrentFile } from '@/api/types'
@@ -38,7 +37,6 @@ import { changeColor } from 'seemly'
 const { t } = useI18n()
 const message = useMessage()
 const torrentDetailStore = useTorrentDetailStore()
-const torrentStore = useTorrentStore()
 const files = computed(() => torrentDetailStore.currentFiles)
 const themeVars = useThemeVars()
 // 右键菜单相关
@@ -73,11 +71,10 @@ const handleContextMenuSelect = async (key: string) => {
 }
 
 const handleRenameFile = async (file: TorrentFile) => {
-  if (torrentStore.selectedKeys.length === 0) {
+  const hash = torrentDetailStore.currentHash
+  if (!hash) {
     return
   }
-
-  const hash = torrentStore.selectedKeys[0]
   const oldPath = file.name
   const fileName = oldPath.split('/').pop() || oldPath
 
@@ -110,11 +107,10 @@ const priorityOptions = computed(() => [
 ])
 
 const handlePriorityChange = async (file: TorrentFile, priority: 0 | 1 | 6 | 7) => {
-  if (torrentStore.selectedKeys.length === 0) {
+  const hash = torrentDetailStore.currentHash
+  if (!hash) {
     return
   }
-
-  const hash = torrentStore.selectedKeys[0]
 
   try {
     await setFilePriority(hash, file.index, priority)

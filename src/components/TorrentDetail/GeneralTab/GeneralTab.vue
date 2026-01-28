@@ -10,7 +10,11 @@
       <TransferInfo :properties="properties" />
 
       <!-- 种子信息 -->
-      <TorrentInfo :properties="properties" :hash="torrentStore.selectedKeys[0]" />
+      <TorrentInfo
+        :properties="properties"
+        :hash="torrentDetailStore.currentHash"
+        v-if="torrentDetailStore.currentHash"
+      />
     </div>
     <div v-else class="flex justify-center items-center h-full text-gray-400">
       {{ $t('torrentDetail.general.noData') }}
@@ -30,7 +34,7 @@ const torrentDetailStore = useTorrentDetailStore()
 const properties = computed(() => torrentDetailStore.currentProperties)
 
 const currentTorrent = computed(() => {
-  const hash = torrentStore.selectedKeys[0]
+  const hash = torrentDetailStore.currentHash
   return hash ? torrentStore.torrentsMap[hash] : null
 })
 
