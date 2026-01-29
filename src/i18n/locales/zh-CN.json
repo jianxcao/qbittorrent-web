@@ -796,7 +796,9 @@
         "title": "Tracker",
         "autoAddTrackers": "自动附加这些 tracker 到新下载",
         "trackersList": "Tracker 列表",
-        "trackersPlaceholder": "每行一个 Tracker URL"
+        "trackersPlaceholder": "每行一个 Tracker URL",
+        "ignoredPrefixes": "忽略的 Tracker 前缀",
+        "ignoredPrefixesHint": "当 Tracker 的子域名看起来像这些字符串之一 +（可选）数字时，它将被省略。这会影响过滤器中的分组和表格列中的显示。您可以在此处使用正则表达式进行更高级的过滤，列表将使用 \"|\" 组合。"
       }
     },
     "webui": {

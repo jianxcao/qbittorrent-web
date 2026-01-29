@@ -169,6 +169,18 @@
           />
         </n-form-item>
       </template>
+
+      <n-form-item :label="$t('settings.bittorrent.trackers.ignoredPrefixes')">
+        <div style="width: 100%">
+          <n-dynamic-tags
+            v-model:value="ignoredTrackerPrefixes"
+            @update:value="handleIgnoredPrefixesChange"
+          />
+          <n-text depth="3" style="font-size: 12px; margin-top: 4px; display: block">
+            {{ $t('settings.bittorrent.trackers.ignoredPrefixesHint') }}
+          </n-text>
+        </div>
+      </n-form-item>
     </n-form>
   </div>
 </template>
@@ -183,6 +195,19 @@ const settingStore = useSettingStore()
 const isMobile = useIsSmallScreen()
 
 const labelPlacement = computed(() => (isMobile.value ? 'top' : 'left'))
+
+// 管理忽略的 Tracker 前缀
+const ignoredTrackerPrefixes = ref<string[]>([])
+
+// 初始化时从 store 加载数据
+watchEffect(() => {
+  ignoredTrackerPrefixes.value = [...settingStore.setting.ignoredTrackerPrefixes]
+})
+
+// 更新 store 中的数据
+const handleIgnoredPrefixesChange = (value: string[]) => {
+  settingStore.changeIgnoredTrackerPrefixes(value)
+}
 
 const encryptionOptions = computed(() => [
   { label: $t('settings.bittorrent.privacy.encryptionPrefer'), value: 0 },

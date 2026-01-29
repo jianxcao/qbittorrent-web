@@ -796,7 +796,9 @@
         "title": "Trackers",
         "autoAddTrackers": "Automatically add these trackers to new downloads",
         "trackersList": "Trackers list",
-        "trackersPlaceholder": "One tracker URL per line"
+        "trackersPlaceholder": "One tracker URL per line",
+        "ignoredPrefixes": "Ignored Tracker Prefixes",
+        "ignoredPrefixesHint": "When the subdomain of a tracker looks like one of these strings + (optionally) a number, it will be omitted. This affects the grouping in filters and the display in table columns. You can use regular expressions here for more advanced filtering, and the list will be combined using \"|\"."
       }
     },
     "webui": {

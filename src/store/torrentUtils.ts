@@ -3,6 +3,7 @@ import { ShuffleOutline } from '@vicons/ionicons5'
 import i18n from '@/i18n'
 import { isFunction } from 'lodash-es'
 import type { Torrent as BaseTorrent, SyncTorrentPeers, Category } from '@/api/types'
+import { useSettingStore } from './setting'
 
 // 扩展 Torrent 类型，添加客户端特定字段
 export interface Torrent extends BaseTorrent {
@@ -30,6 +31,7 @@ export const detailFilterOptions = function (
   globalCategories: Record<string, Category>
 ) {
   const $t = i18n.global.t
+  const settingStore = useSettingStore()
   // === 1. 统计各种选项（用于生成过滤选项） ===
   // 标签统计 - 使用全局标签列表
   globalTags.forEach((tag: string) => {
@@ -52,6 +54,11 @@ export const detailFilterOptions = function (
       } catch {
         host = t.tracker
       }
+    }
+    const prefixMatch = settingStore.ignoredTrackerPrefixesReg.exec(host)
+    // console.debug("prefixMatch", prefixMatch, settingStore.ignoredTrackerPrefixesReg)
+    if (prefixMatch?.groups !== undefined) {
+      host = host.substring(prefixMatch.groups.prefix.length + 1)
     }
     const prev = trackerSet.get(host)
     trackerSet.set(host, { count: (prev?.count || 0) + 1 })
@@ -260,9 +267,9 @@ export const processTorrent = (torrent: BaseTorrent): Torrent => {
   // 解析 tags 字符串为数组
   const tagsArray = torrent.tags
     ? torrent.tags
-        .split(',')
-        .map((t) => t.trim())
-        .filter((t) => t)
+      .split(',')
+      .map((t) => t.trim())
+      .filter((t) => t)
     : []
 
   // 解析 tracker hostname
