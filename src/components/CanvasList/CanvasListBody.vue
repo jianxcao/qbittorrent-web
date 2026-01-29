@@ -416,7 +416,7 @@ function handleRowClick(rowIndex: number, e: any, isCheckbox: boolean = false) {
     } else {
       if (e.shiftKey) {
         torrentStore.selectRange(rowIndex)
-      } else if (e.ctrlKey) {
+      } else if ((isMac() && e.metaKey) || (!isMac && e.ctrlKey)) {
         torrentStore.toggleSelectedKey(torrent.hash)
       } else {
         torrentStore.setSelectedKeys([torrent.hash])
