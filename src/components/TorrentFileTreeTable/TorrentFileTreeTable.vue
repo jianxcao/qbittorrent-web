@@ -231,7 +231,7 @@ const manualWidthKeys = ref<Set<number>>(new Set())
 
 // 列配置：[minWidth, defaultWidth]
 const columnConfigs = [
-  { key: 'name', minWidth: 120, defaultWidth: 0 }, // 名称列自适应
+  { key: 'name', minWidth: 300, defaultWidth: 0 }, // 名称列自适应
   { key: 'size', minWidth: 80, defaultWidth: 100 },
   { key: 'progress', minWidth: 100, defaultWidth: 150 },
   { key: 'priority', minWidth: 100, defaultWidth: 140 },
