@@ -3,14 +3,14 @@
     :indent="8"
     :options="statusMenuOptions"
     v-model:value="torrentStore.statusFilter"
-    :default-expand-all="true"
+    v-model:expanded-keys="settingStore.setting.menuExpandedKeys"
     :node-props="nodeProps"
   />
   <StatusContextMenu ref="contextMenuRef" />
 </template>
 <script setup lang="ts">
 import MagnetIcon from '@/assets/icons/magnet.svg?component'
-import { useTorrentStore } from '@/store'
+import { useTorrentStore, useSettingStore } from '@/store'
 import { renderIcon } from '@/utils'
 import { ShuffleOutline } from '@vicons/ionicons5'
 import { useI18n } from 'vue-i18n'
@@ -19,6 +19,7 @@ import type { MenuOption } from 'naive-ui'
 import StatusContextMenu from './StatusContextMenu.vue'
 
 const torrentStore = useTorrentStore()
+const settingStore = useSettingStore()
 const { t: $t } = useI18n()
 const contextMenuRef = ref<InstanceType<typeof StatusContextMenu> | null>(null)
 

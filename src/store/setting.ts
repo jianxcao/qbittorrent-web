@@ -46,7 +46,8 @@ export const useSettingStore = defineStore('setting', () => {
       polling: {
         torrentDetailInterval: 3,
         torrentInterval: 3
-      }
+      },
+      menuExpandedKeys: ['status', 'categories', 'tags', 'dir']
     },
     localStorage,
     { mergeDefaults: true, deep: true, writeDefaults: true }

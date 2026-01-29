@@ -3,13 +3,13 @@
     :indent="8"
     :options="categoryMenuOptions"
     v-model:value="torrentStore.categoryFilter"
-    :default-expand-all="true"
+    v-model:expanded-keys="settingStore.setting.menuExpandedKeys"
     :node-props="nodeProps"
   />
   <CategoryContextMenu ref="contextMenuRef" />
 </template>
 <script setup lang="ts">
-import { useTorrentStore } from '@/store'
+import { useTorrentStore, useSettingStore } from '@/store'
 import { renderIcon } from '@/utils'
 import { Folder, FolderOpen } from '@vicons/ionicons5'
 import { useI18n } from 'vue-i18n'
@@ -18,6 +18,7 @@ import type { MenuOption } from 'naive-ui'
 import CategoryContextMenu from './CategoryContextMenu.vue'
 
 const torrentStore = useTorrentStore()
+const settingStore = useSettingStore()
 const { t: $t } = useI18n()
 const contextMenuRef = ref<InstanceType<typeof CategoryContextMenu> | null>(null)
 

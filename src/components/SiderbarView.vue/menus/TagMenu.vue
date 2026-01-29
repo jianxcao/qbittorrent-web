@@ -3,13 +3,13 @@
     :indent="8"
     :options="tagMenuOptions"
     v-model:value="torrentStore.tagsFilter"
-    :default-expand-all="true"
+    v-model:expanded-keys="settingStore.setting.menuExpandedKeys"
     :node-props="nodeProps"
   />
   <TagContextMenu ref="contextMenuRef" />
 </template>
 <script setup lang="ts">
-import { useTorrentStore } from '@/store'
+import { useTorrentStore, useSettingStore } from '@/store'
 import { renderIcon } from '@/utils'
 import { Pricetag, Pricetags } from '@vicons/ionicons5'
 import { useI18n } from 'vue-i18n'
@@ -18,6 +18,7 @@ import type { MenuOption } from 'naive-ui'
 import TagContextMenu from './TagContextMenu.vue'
 
 const torrentStore = useTorrentStore()
+const settingStore = useSettingStore()
 const { t: $t } = useI18n()
 
 const contextMenuRef = ref<InstanceType<typeof TagContextMenu> | null>(null)
