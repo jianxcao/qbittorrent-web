@@ -1,4 +1,5 @@
 import { useI18n } from 'vue-i18n'
+import { colord } from 'colord'
 
 const priorityMeta = [
   { color: '#FF7F0A', text: (t: any) => t('priority.high'), key: 1 },
@@ -20,18 +21,18 @@ export const priorityOptions = priorityMeta.map((item) => ({
 
 export const priorityTagColorConfig: Record<string, { color: string; textColor: string; borderColor: string }> = {
   1: {
-    color: `color-mix(in srgb, ${priorityMeta[0].color} 50%, transparent)`,
+    color: colord(priorityMeta[0].color).alpha(0.5).toRgbString(),
     textColor: priorityMeta[0].color,
-    borderColor: `color-mix(in srgb, ${priorityMeta[0].color} 50%, transparent)`
+    borderColor: colord(priorityMeta[0].color).alpha(0.5).toRgbString()
   },
   0: {
-    color: `color-mix(in srgb, ${priorityMeta[1].color} 50%, transparent)`,
+    color: colord(priorityMeta[1].color).alpha(0.5).toRgbString(),
     textColor: priorityMeta[1].color,
-    borderColor: `color-mix(in srgb, ${priorityMeta[1].color} 50%, transparent)`
+    borderColor: colord(priorityMeta[1].color).alpha(0.5).toRgbString()
   },
   '-1': {
-    color: `color-mix(in srgb, ${priorityMeta[2].color} 50%, transparent)`,
+    color: colord(priorityMeta[2].color).alpha(0.5).toRgbString(),
     textColor: priorityMeta[2].color,
-    borderColor: `color-mix(in srgb, ${priorityMeta[2].color} 50%, transparent)`
+    borderColor: colord(priorityMeta[2].color).alpha(0.5).toRgbString()
   }
 }

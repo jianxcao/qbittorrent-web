@@ -1,7 +1,9 @@
 import type { CellRenderer, CellRenderContext } from '../types'
 import { Text, Rect, Group } from 'leafer-ui'
+import { colord } from 'colord'
 import type { Group as LeaferGroup } from 'leafer-ui'
 import { FONT_FAMILY } from '../constant'
+import { measureTextWidth } from '@/utils'
 
 /**
  * Category 标签单元格渲染器
@@ -22,20 +24,10 @@ export class CategoryCellRenderer implements CellRenderer {
 
     // Tag 样式配置
     const padding = 12 // 单元格左侧padding
-    const tagPaddingX = 10 // tag 内部水平padding
-    const tagPaddingY = 6 // tag 内部垂直padding
+    const tagPaddingX = 10 // tag 内部水平paddin
     const tagRadius = 4 // 圆角半径
     const tagMaxWidth = width - padding * 2 // tag 的最大宽度
-
-    // 创建临时文本元素来测量文本宽度
-    const tempText = new Text({
-      text: textValue,
-      fontSize: 13,
-      fontWeight: 'normal',
-      fontFamily: FONT_FAMILY
-    })
-    const textMetrics = tempText.getBounds('box')
-    const textWidth = textMetrics.width
+    const textWidth = measureTextWidth(textValue, 13, 'normal') * 1.15
 
     // 计算 tag 实际宽度（不超过最大宽度）
     const tagContentWidth = Math.min(textWidth + tagPaddingX * 2, tagMaxWidth)
@@ -47,13 +39,13 @@ export class CategoryCellRenderer implements CellRenderer {
 
     // Tag 背景颜色 - 使用主题色的浅色版本
     const tagBgColor = isSelected
-      ? `color-mix(in srgb, ${theme.primaryColor} 30%, ${theme.cardColor} 70%)`
-      : `color-mix(in srgb, ${theme.primaryColor} 15%, ${theme.cardColor} 85%)`
+      ? colord(theme.primaryColor).alpha(0.3).mix(theme.cardColor, 0.7).toRgbString()
+      : colord(theme.primaryColor).alpha(0.15).mix(theme.cardColor, 0.85).toRgbString()
 
     // Tag 文本颜色
     const tagTextColor = isSelected
       ? theme.primaryColor
-      : `color-mix(in srgb, ${theme.primaryColor} 80%, ${theme.textColor2} 20%)`
+      : colord(theme.primaryColor).alpha(0.8).mix(theme.textColor2, 0.2).toRgbString()
 
     // 创建 tag 组
     const tagGroup = new Group()
@@ -81,11 +73,10 @@ export class CategoryCellRenderer implements CellRenderer {
       verticalAlign: 'middle',
       width: tagContentWidth - tagPaddingX * 2,
       height: tagHeight,
-      overflow: 'hide' as any,
       textOverflow: 'ellipsis',
       textWrap: 'none',
       fontFamily: FONT_FAMILY
-    } as any)
+    })
     tagGroup.add(tagText)
 
     leaferGroup.add(tagGroup)

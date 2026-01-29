@@ -1,5 +1,6 @@
 import type { CellRenderer, CellRenderContext } from '../types'
 import { Rect, Text } from 'leafer-ui'
+import { colord } from 'colord'
 import type { Group } from 'leafer-ui'
 import { FONT_FAMILY } from '../constant'
 
@@ -44,7 +45,7 @@ export class ProgressCellRenderer implements CellRenderer {
         y: barY,
         width: fillWidth,
         height: barHeight,
-        fill: progress >= 1 ? theme.successColor : theme.primaryColor,
+        fill: colord(theme.primaryColor).alpha(0.2).toRgbString(),
         cornerRadius
       })
       leaferGroup.add(fillRect)
@@ -52,8 +53,7 @@ export class ProgressCellRenderer implements CellRenderer {
 
     // 3. 绘制百分比文本
     const percentText = `${Math.round(progress * 100)}%`
-    // 文本颜色：进度超过50%时使用白色，否则使用普通文本色
-    const textColor = progress > 0.5 ? '#ffffff' : theme.textColor2
+    const textColor = theme.primaryColor
 
     const textElement = new Text({
       text: percentText,

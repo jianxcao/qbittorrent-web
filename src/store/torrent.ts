@@ -332,7 +332,7 @@ export const useTorrentStore = defineStore('torrent', () => {
   }
 
 
-  const interval = computed(() => settingStore.setting.polling.torrentInterval * 10000000)
+  const interval = computed(() => settingStore.setting.polling.torrentInterval * 1000)
   const { pause: stopPolling, resume: startPolling } = useIntervalFn(fetchTorrents, interval, { immediate: false })
 
   watch([search, statusFilter, tagsFilter, trackerFilter, errorStringFilter, downloadDirFilter, categoryFilter], () => {

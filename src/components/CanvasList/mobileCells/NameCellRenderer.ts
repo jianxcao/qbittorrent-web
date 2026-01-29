@@ -1,8 +1,9 @@
-import type { MobileCellRenderer, MobileCellRenderContext } from '../mobileTypes'
-import { Text, Ellipse, Group, Rect } from 'leafer-ui'
-import { MENU_BUTTON_SIZE, MENU_BUTTON_MARGIN, MOBILE_CELL_SPACING } from '../mobileConstants'
 import { measureTextWidth } from '@/utils'
+import { Box, Ellipse, Group, Rect, Text } from 'leafer-ui'
+import { colord } from 'colord'
 import { FONT_FAMILY } from '../constant'
+import { MENU_BUTTON_MARGIN, MENU_BUTTON_SIZE, MOBILE_CELL_SPACING } from '../mobileConstants'
+import type { MobileCellRenderContext, MobileCellRenderer } from '../mobileTypes'
 
 /**
  * 名称 Cell 渲染器
@@ -65,48 +66,49 @@ class NameCellRenderer implements MobileCellRenderer {
     const tagRadius = 4
     const tagHeight = 22
     const fontSize = 12
-
     // 计算 tag 实际宽度
     // 使用工具函数测量文本宽度（带缓存优化）
-    const textWidth = measureTextWidth(category, fontSize, 'normal')
+    const textWidth = measureTextWidth(category, fontSize, 'normal') * 1.15
 
     // 计算 tag 实际宽度（限制为可用宽度的70%，避免标签过长）
-    const maxTagWidth = Math.min(maxWidth * 0.7, 150) // 最大不超过可用宽度的70%或150px
+    const maxTagWidth = Math.max(maxWidth * 0.8, 150) // 最大不超过可用宽度的70%或150px
     const tagWidth = Math.min(textWidth + tagPaddingX * 2, maxTagWidth)
-
+    const maxTextWidth = Math.min(maxTagWidth, textWidth)
     // Tag 背景颜色
-    const tagBgColor = `color-mix(in srgb, ${theme.primaryColor} 15%, ${theme.cardColor} 85%)`
-    const tagTextColor = `color-mix(in srgb, ${theme.primaryColor} 80%, ${theme.textColor2} 20%)`
+    const tagBgColor = colord(theme.primaryColor).alpha(0.15).mix(theme.cardColor, 0.1).toRgbString()
+    const tagTextColor = colord(theme.primaryColor).alpha(0.9).mix(theme.textColor2, 0.1).toRgbString()
 
     // 绘制 tag 背景
-    const tagBg = new Rect({
+    const tagBox = new Box({
       x: x,
       y: y + 1, // 稍微向下偏移
-      width: tagWidth,
+      autoWidth: 1,
+      widthRange: { min: tagWidth, max: maxTagWidth },
       height: tagHeight,
       fill: tagBgColor,
-      cornerRadius: tagRadius
+      cornerRadius: tagRadius,
+      overflow: 'hide'
     })
-    group.add(tagBg)
 
-    // 绘制 tag 文本（确保文本不会溢出标签背景）
-    const textContentWidth = tagWidth - tagPaddingX * 2
+
     const tagText = new Text({
       text: category,
-      x: x + tagPaddingX,
-      y: y + 1,
+      x: tagPaddingX,
+      y: 0,
       fill: tagTextColor,
       fontSize: fontSize,
       fontWeight: 'normal',
       textAlign: 'left',
       verticalAlign: 'middle',
-      width: textContentWidth,
+      width: maxTextWidth,
       height: tagHeight,
-      overflow: 'hide' as any,
+      overflow: 'hide',
       textOverflow: 'ellipsis',
       fontFamily: FONT_FAMILY
-    } as any)
-    group.add(tagText)
+    })
+    tagBox.add(tagText)
+
+    group.add(tagBox)
   }
 
   /**

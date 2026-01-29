@@ -1,10 +1,11 @@
-import type { MobileCellRenderer, MobileCellRenderContext } from '../mobileTypes'
-import { Text, Rect } from 'leafer-ui'
-import { MOBILE_CELL_SPACING } from '../mobileConstants'
-import { qbStateIconMap } from '@/const/status'
 import type { QBTorrentState } from '@/api/types'
+import { qbStateIconMap } from '@/const/status'
+import { colord } from 'colord'
 import { i18n } from '@/i18n'
+import { Rect, Text } from 'leafer-ui'
 import { FONT_FAMILY } from '../constant'
+import { MOBILE_CELL_SPACING } from '../mobileConstants'
+import type { MobileCellRenderContext, MobileCellRenderer } from '../mobileTypes'
 
 /**
  * 进度状态 Cell 渲染器
@@ -148,7 +149,7 @@ class ProgressStatusCellRenderer implements MobileCellRenderer {
 
     // 获取状态颜色
     const statusColor = stateInfo?.color || theme.textColor2
-    const bgColor = `color-mix(in srgb, ${statusColor} 15%, transparent)`
+    const bgColor = colord(statusColor).alpha(0.15).toRgbString()
 
     // 背景标签
     const tagBg = new Rect({

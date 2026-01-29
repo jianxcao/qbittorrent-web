@@ -2,8 +2,9 @@
  * 文本宽度测量工具
  * 使用 Canvas API 测量文本宽度，并带有 LRU 缓存优化
  */
-
+import { Text } from 'leafer-ui'
 import LRUCache from './lru'
+import { FONT_FAMILY } from '@/components/CanvasList/constant'
 
 // 创建 LRU 缓存，最多缓存 500 个测量结果
 const textWidthCache = new LRUCache<string, number>(500)
@@ -29,29 +30,19 @@ export function measureTextWidth(text: string, fontSize: number, fontWeight: str
   // 尝试从缓存获取
   const cached = textWidthCache.get(cacheKey)
   if (cached !== undefined) {
-    return cached
+    return Math.ceil(cached)
   }
 
-  // 测量文本宽度
-  let textWidth = 0
-  try {
-    // 创建临时 canvas 来测量文本
-    const canvas = document.createElement('canvas')
-    const ctx = canvas.getContext('2d')
-    if (ctx) {
-      ctx.font = `${fontWeight} ${fontSize}px sans-serif`
-      const metrics = ctx.measureText(text)
-      textWidth = metrics.width
-    }
-  } catch (e) {
-    // 如果 canvas 测量失败，使用粗略估算：字符数 * 字体大小 * 0.6
-    textWidth = text.length * fontSize * 0.6
-  }
-
+  const t = new Text({
+    text: text,
+    fontSize: fontSize,
+    fontWeight: fontWeight,
+    fontFamily: FONT_FAMILY
+  })
+  const textWidth = t.getBounds('box').width
   // 缓存结果
   textWidthCache.set(cacheKey, textWidth)
-
-  return textWidth
+  return Math.ceil(textWidth)
 }
 
 /**
