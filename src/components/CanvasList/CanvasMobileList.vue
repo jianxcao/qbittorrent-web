@@ -337,7 +337,7 @@ onMounted(() => {
     if (!containerRef.value) {
       return
     }
-
+    torrentStore.startPolling()
     // 创建 Leafer 实例，使用 actualWidth 确保获取到正确的宽度
     leafer = new Leafer({
       view: containerRef.value,
@@ -364,6 +364,7 @@ onUnmounted(() => {
     leafer = null
   }
   contentGroup = null
+  torrentStore.stopPolling()
 })
 </script>
 
