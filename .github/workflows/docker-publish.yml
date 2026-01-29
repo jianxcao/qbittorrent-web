@@ -1,6 +1,9 @@
 name: Docker Build and Push
 
 on:
+  push:
+    tags:
+      - 'v*' # 当推送以 v 开头的标签时触发
   workflow_dispatch:
     inputs:
       tag_suffix:
