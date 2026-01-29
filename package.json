@@ -1,6 +1,6 @@
 {
   "name": "qb-web",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "🚀 现代化的 qb BitTorrent 客户端 Web 界面，基于 Vue 3 + TypeScript 构建，支持响应式设计、虚拟滚动和智能过滤功能",
   "type": "module",
   "keywords": [
