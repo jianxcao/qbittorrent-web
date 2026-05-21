@@ -21,7 +21,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import ListHeader from './ListHeader.vue'
 import CanvasListBody from './CanvasListBody.vue'
 import { useTorrentStore } from '@/store'
@@ -38,6 +38,7 @@ const toolbarStore = useToolbarStore()
 const isMobile = useIsSmallScreen()
 const showHeaderMenu = ref(false)
 const headerHeight = ref(0)
+const scrollWrapperRef = ref<HTMLElement>()
 const scrollLeft = ref(0)
 const scrollTop = ref(0)
 
@@ -62,6 +63,39 @@ function handleScroll(e: Event) {
   scrollTop.value = target.scrollTop
   scrollLeft.value = target.scrollLeft
 }
+
+function scrollToTorrentIfNeeded(hash: string | null) {
+  if (!hash || !scrollWrapperRef.value) {
+    return
+  }
+
+  const rowIndex = torrentStore.mapFilterTorrentsIndex[hash]
+  if (rowIndex === undefined) {
+    return
+  }
+
+  const rowTop = rowIndex * ROW_HEIGHT
+  const rowBottom = rowTop + ROW_HEIGHT
+  const scrollWrapper = scrollWrapperRef.value
+  const visibleTop = scrollWrapper.scrollTop
+  const visibleBottom = visibleTop + scrollWrapper.clientHeight
+
+  if (rowTop >= visibleTop && rowBottom <= visibleBottom) {
+    return
+  }
+
+  scrollWrapper.scrollTop = Math.max(0, rowTop)
+  scrollTop.value = scrollWrapper.scrollTop
+}
+
+watch(
+  () => torrentStore.scrollToTorrentRequest,
+  () => {
+    nextTick(() => {
+      scrollToTorrentIfNeeded(torrentStore.scrollToTorrentHash)
+    })
+  }
+)
 
 // 获取 header 的实际高度
 onMounted(() => {

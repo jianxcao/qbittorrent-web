@@ -1,5 +1,9 @@
 import { ref, computed } from 'vue'
 
+export function retainVisibleSelectedKeys(selectedKeys: string[], visibleKeys: ReadonlySet<string>) {
+  return selectedKeys.filter((hash) => visibleKeys.has(hash))
+}
+
 // 通用 选中逻辑，负责选中行
 // 支持 hash (string) 作为唯一标识符
 export function useSelection<T extends { hash: string }>(items: () => T[]) {
@@ -17,13 +21,13 @@ export function useSelection<T extends { hash: string }>(items: () => T[]) {
   // 设置选中
   function setSelectedKeys(keys: string[]) {
     selectedKeys.value = [...keys]
-    lastSelectedHash.value = keys[keys.length - 1]
+    lastSelectedHash.value = keys[keys.length - 1] ?? null
   }
   // 切换选中
   function toggleSelectedKey(key: string) {
     if (selectedKeys.value.includes(key)) {
       selectedKeys.value = selectedKeys.value.filter((k) => k !== key)
-      lastSelectedHash.value = selectedKeys.value[selectedKeys.value.length - 1]
+      lastSelectedHash.value = selectedKeys.value[selectedKeys.value.length - 1] ?? null
     } else {
       selectedKeys.value = [...selectedKeys.value, key]
       lastSelectedHash.value = key
@@ -48,10 +52,9 @@ export function useSelection<T extends { hash: string }>(items: () => T[]) {
     }
     const start = Math.min(latestIndex, currentIndex)
     const end = Math.max(latestIndex, currentIndex)
-    const rangeHashes = currentItems
-      .slice(start, end + 1)
-      .map((t) => t.hash)
+    const rangeHashes = currentItems.slice(start, end + 1).map((t) => t.hash)
     selectedKeys.value = rangeHashes
+    lastSelectedHash.value = rangeHashes[rangeHashes.length - 1] ?? null
   }
 
   function setLastSelectedHash(hash: string) {

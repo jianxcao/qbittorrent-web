@@ -49,6 +49,7 @@ const settingStore = useSettingStore()
 const toolbarStore = useToolbarStore()
 const rowMenuStore = useRowMenuStore()
 const containerRef = ref<HTMLElement>()
+const scrollWrapperRef = ref<HTMLElement>()
 const { width: containerWidth } = useElementSize(containerRef)
 
 // 获取实际容器宽度，如果 useElementSize 返回 0 则使用 DOM 直接获取
@@ -88,6 +89,30 @@ const visibleRange = computed(() => {
 function handleScroll(e: Event) {
   const target = e.target as HTMLElement
   scrollTop.value = target.scrollTop
+}
+
+function scrollToTorrentIfNeeded(hash: string | null) {
+  if (!hash || !scrollWrapperRef.value) {
+    return
+  }
+
+  const rowIndex = torrentStore.mapFilterTorrentsIndex[hash]
+  if (rowIndex === undefined) {
+    return
+  }
+
+  const cardTop = rowIndex * MOBILE_CARD_TOTAL_HEIGHT
+  const cardBottom = cardTop + MOBILE_CARD_TOTAL_HEIGHT
+  const scrollWrapper = scrollWrapperRef.value
+  const visibleTop = scrollWrapper.scrollTop
+  const visibleBottom = visibleTop + scrollWrapper.clientHeight
+
+  if (cardTop >= visibleTop && cardBottom <= visibleBottom) {
+    return
+  }
+
+  scrollWrapper.scrollTop = Math.max(0, cardTop)
+  scrollTop.value = scrollWrapper.scrollTop
 }
 
 /**
@@ -305,6 +330,15 @@ watch(
     scheduleRender()
   },
   { deep: true }
+)
+
+watch(
+  () => torrentStore.scrollToTorrentRequest,
+  () => {
+    nextTick(() => {
+      scrollToTorrentIfNeeded(torrentStore.scrollToTorrentHash)
+    })
+  }
 )
 
 // 监听滚动位置变化，更新 contentGroup 偏移

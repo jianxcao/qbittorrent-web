@@ -2,7 +2,7 @@ import type { Torrent as BaseTorrent, Category, TransferInfo } from '@/api/types
 import { getMainData } from '@/api/modules/sync'
 import { getCategories, getTags } from '@/api/modules/torrents'
 import { useColumns } from '@/composables/useColumns'
-import { useSelection } from '@/composables/useSelection'
+import { retainVisibleSelectedKeys, useSelection } from '@/composables/useSelection'
 import { useSettingStore } from '@/store/setting'
 import { useIntervalFn } from '@vueuse/core'
 import { defineStore } from 'pinia'
@@ -82,11 +82,9 @@ export const useTorrentStore = defineStore('torrent', () => {
     // 存储过滤后的结果
     const filtered: Torrent[] = []
     //  生成索引映射（使用 hash 作为 key）
-    const mapFilterTorrentsIndex: Record<string, number> = {}
     const mapTorrentsHash: Record<string, Torrent> = {}
 
     // 一次循环完成所有计算：统计 + 过滤
-    let filteredIndex = 0
     torrents.value.forEach((t) => {
       mapTorrentsHash[t.hash] = t
       // 将选项全部放到 map 中
@@ -115,7 +113,6 @@ export const useTorrentStore = defineStore('torrent', () => {
         )
       ) {
         filtered.push(t)
-        mapFilterTorrentsIndex[t.hash] = filteredIndex++
       }
     })
 
@@ -123,6 +120,10 @@ export const useTorrentStore = defineStore('torrent', () => {
     if (sortKey.value) {
       sortTorrents(filtered, sortKey, sortOrder)
     }
+    const mapFilterTorrentsIndex: Record<string, number> = {}
+    filtered.forEach((t, index) => {
+      mapFilterTorrentsIndex[t.hash] = index
+    })
     // 检测所有的 filter 的值是否在 map 里面，如果不在重置成全部
     if (!statusSet.get(statusFilter.value)) {
       statusFilter.value = 'all'
@@ -162,6 +163,8 @@ export const useTorrentStore = defineStore('torrent', () => {
   const options = computed(() => computedData.value.options)
   const filterTorrents = computed(() => computedData.value.filterTorrents)
   const mapFilterTorrentsIndex = computed(() => computedData.value.mapFilterTorrentsIndex)
+  const scrollToTorrentHash = ref<string | null>(null)
+  const scrollToTorrentRequest = ref(0)
 
   // selection 相关逻辑拆分
   const {
@@ -174,6 +177,31 @@ export const useTorrentStore = defineStore('torrent', () => {
     lastSelectedHash,
     setLastSelectedHash
   } = useSelection(() => filterTorrents.value)
+
+  function requestScrollToTorrent(hash: string) {
+    scrollToTorrentHash.value = hash
+    scrollToTorrentRequest.value += 1
+  }
+
+  function keepVisibleSelectionAndRequestScroll() {
+    if (selectedKeys.value.length === 0) {
+      return
+    }
+
+    const visibleKeys = new Set(filterTorrents.value.map((t) => t.hash))
+    const retainedKeys = retainVisibleSelectedKeys(selectedKeys.value, visibleKeys)
+    const hasSelectionChanged =
+      retainedKeys.length !== selectedKeys.value.length ||
+      retainedKeys.some((hash, index) => hash !== selectedKeys.value[index])
+
+    if (hasSelectionChanged) {
+      setSelectedKeys(retainedKeys)
+    }
+
+    if (retainedKeys.length > 0) {
+      requestScrollToTorrent(retainedKeys[0])
+    }
+  }
 
   async function fetchTorrents() {
     // 首次加载获取所有分类和标签
@@ -334,15 +362,21 @@ export const useTorrentStore = defineStore('torrent', () => {
   const interval = computed(() => settingStore.setting.polling.torrentInterval * 1000)
   const { pause: stopPolling, resume: startPolling } = useIntervalFn(fetchTorrents, interval, { immediate: false })
 
-  watch([search, statusFilter, tagsFilter, trackerFilter, errorStringFilter, downloadDirFilter, categoryFilter], () => {
-    clearSelectedKeys()
-  })
+  watch(
+    [search, statusFilter, tagsFilter, trackerFilter, errorStringFilter, downloadDirFilter, categoryFilter],
+    () => {
+      keepVisibleSelectionAndRequestScroll()
+    },
+    { flush: 'post' }
+  )
   ;(window as any).torrents = torrents
   return {
     getColumnTitle,
     torrents,
     filterTorrents,
     mapFilterTorrentsIndex,
+    scrollToTorrentHash,
+    scrollToTorrentRequest,
     statusFilter,
     tagsFilter,
     trackerFilter,
