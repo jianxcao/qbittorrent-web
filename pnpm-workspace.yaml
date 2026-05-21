@@ -1,2 +1,12 @@
+packages:
+  - '.'
+
+overrides:
+  vite: npm:rolldown-vite@latest
+
 allowBuilds:
   less: true
+  vue-tsc: true
+  esbuild: true
+
+strictDepBuilds: false

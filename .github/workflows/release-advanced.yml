@@ -71,14 +71,32 @@ jobs:
           fi
           echo "✅ Build output verified"
 
-      - name: Create release archive
+      - name: Resolve release info
+        id: release_info
         run: |
-          # 获取版本号
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             VERSION="${{ github.event.inputs.version }}"
+            TAG="v${VERSION}"
           else
-            VERSION=${GITHUB_REF#refs/tags/}
+            TAG=${GITHUB_REF#refs/tags/}
+            VERSION=${TAG#v}
           fi
+
+          PRERELEASE=false
+          if [[ "$VERSION" == *-* ]]; then
+            PRERELEASE=true
+          fi
+
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "prerelease=$PRERELEASE" >> $GITHUB_OUTPUT
+          echo "Release version: $VERSION"
+          echo "Release tag: $TAG"
+          echo "Prerelease: $PRERELEASE"
+
+      - name: Create release archive
+        run: |
+          VERSION="${{ steps.release_info.outputs.version }}"
 
           echo "Creating release for version: $VERSION"
 
@@ -98,12 +116,8 @@ jobs:
       - name: Generate release notes
         id: release_notes
         run: |
-          # 获取版本号
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            VERSION="${{ github.event.inputs.version }}"
-          else
-            VERSION=${GITHUB_REF#refs/tags/}
-          fi
+          VERSION="${{ steps.release_info.outputs.version }}"
+          TAG="${{ steps.release_info.outputs.tag }}"
 
           # 生成变更日志
           if [ "${{ github.event_name }}" = "push" ]; then
@@ -133,6 +147,7 @@ jobs:
           - 构建时间: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
           - 提交: ${{ github.sha }}
           - 分支: ${{ github.ref }}
+          - 标签: $TAG
           EOF
 
           # 输出到 GitHub Actions
@@ -143,10 +158,12 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ steps.release_info.outputs.tag }}
+          name: ${{ steps.release_info.outputs.tag }}
           files: qbittorrent-web-*.zip
           body: ${{ steps.release_notes.outputs.notes }}
           draft: false
-          prerelease: ${{ contains(github.ref, '-') }}
+          prerelease: ${{ steps.release_info.outputs.prerelease }}
           generate_release_notes: false # 使用我们自定义的 release notes
           token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -162,9 +179,11 @@ jobs:
       - name: Notify success
         if: success()
         run: |
+          VERSION="${{ steps.release_info.outputs.version }}"
+          TAG="${{ steps.release_info.outputs.tag }}"
           echo "🎉 Release $VERSION created successfully!"
           echo "📦 Archive: qbittorrent-web-${VERSION}.zip"
-          echo "🔗 Release URL: https://github.com/${{ github.repository }}/releases/tag/$VERSION"
+          echo "🔗 Release URL: https://github.com/${{ github.repository }}/releases/tag/$TAG"
 
       - name: Notify failure
         if: failure()

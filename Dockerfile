@@ -1,14 +1,15 @@
 FROM node:23-alpine AS node_builder
 WORKDIR /build
 
+
 # 先复制依赖相关文件，利用Docker缓存层
-COPY package.json pnpm-lock.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 
 # RUN npm config set registry https://registry.npmmirror.com/
 RUN npm install -g pnpm
 
 # 强制重新安装所有依赖，确保构建环境的一致性
-RUN pnpm install --force
+RUN pnpm install --ignore-scripts=false --force
 
 # 可选的更严格选项（根据需要启用）：
 # RUN pnpm install --force --frozen-lockfile --no-optional
