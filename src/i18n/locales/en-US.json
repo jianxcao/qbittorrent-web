@@ -49,6 +49,12 @@
   "header": {
     "title": "qBittorrent Web"
   },
+  "pwa": {
+    "updateTitle": "Update available",
+    "updateDescription": "Refresh the page to apply the latest version.",
+    "refresh": "Refresh",
+    "later": "Later"
+  },
   "login": {
     "title": "qBittorrent Login",
     "serverUrl": "Server URL",

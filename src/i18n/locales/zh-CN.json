@@ -49,6 +49,12 @@
   "header": {
     "title": "qBittorrent Web"
   },
+  "pwa": {
+    "updateTitle": "发现新版本",
+    "updateDescription": "刷新页面即可完成更新。",
+    "refresh": "刷新更新",
+    "later": "稍后"
+  },
   "login": {
     "title": "qBittorrent 登录",
     "serverUrl": "服务器地址",
