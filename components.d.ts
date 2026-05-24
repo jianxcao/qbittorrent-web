@@ -90,6 +90,7 @@ declare module 'vue' {
     NUpload: typeof import('naive-ui')['NUpload']
     PeerContextMenu: typeof import('./src/components/TorrentDetail/PeersTab/PeerContextMenu.vue')['default']
     PeersTab: typeof import('./src/components/TorrentDetail/PeersTab.vue')['default']
+    PwaUpdatePrompt: typeof import('./src/components/PwaUpdatePrompt.vue')['default']
     RenameDialog: typeof import('./src/components/TorrentFileTreeTable/RenameDialog.vue')['default']
     RenameFolderDialog: typeof import('./src/components/dialog/RenameFolderDialog.vue')['default']
     RenameTorrentDialog: typeof import('./src/components/dialog/RenameTorrentDialog.vue')['default']

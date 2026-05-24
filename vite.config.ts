@@ -6,6 +6,7 @@ import { NaiveUiResolver } from 'unplugin-vue-components/resolvers'
 import { fileURLToPath, URL } from 'node:url'
 import svgLoader from 'vite-svg-loader'
 import AutoImport from 'unplugin-auto-import/vite'
+import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
@@ -69,6 +70,69 @@ export default defineConfig(({ mode }) => {
       Components({
         resolvers: [NaiveUiResolver()],
         dts: true
+      }),
+      VitePWA({
+        registerType: 'prompt',
+        injectRegister: false,
+        manifestFilename: 'site.webmanifest',
+        includeAssets: ['apple-touch-icon.png'],
+        manifest: {
+          name: 'Qbittorrent Web UI',
+          short_name: 'Qbittorrent',
+          description: 'Modern web interface for qBittorrent client',
+          start_url: base || '/',
+          scope: base || '/',
+          display: 'standalone',
+          orientation: 'portrait',
+          theme_color: '#101014',
+          background_color: '#101014',
+          categories: ['utilities', 'productivity'],
+          lang: 'en-US',
+          dir: 'ltr',
+          icons: [
+            {
+              src: 'pwa-192x192.png',
+              sizes: '192x192',
+              type: 'image/png',
+              purpose: 'any maskable'
+            },
+            {
+              src: 'pwa-512x512.png',
+              sizes: '512x512',
+              type: 'image/png',
+              purpose: 'any maskable'
+            },
+            {
+              src: 'apple-touch-icon.png',
+              sizes: '1024x1024',
+              type: 'image/png',
+              purpose: 'any maskable'
+            }
+          ],
+          screenshots: [
+            {
+              src: 'mobile.png',
+              sizes: '774x1510',
+              type: 'image/png',
+              form_factor: 'narrow',
+              label: 'Qbittorrent Web UI - Mobile View'
+            },
+            {
+              src: 'pc.png',
+              sizes: '3018x1710',
+              type: 'image/png',
+              form_factor: 'wide',
+              label: 'Qbittorrent Web UI - Desktop View'
+            }
+          ]
+        },
+        workbox: {
+          globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,woff2}'],
+          cleanupOutdatedCaches: true
+        },
+        devOptions: {
+          enabled: true
+        }
       })
     ],
     server: {
