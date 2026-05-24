@@ -12,3 +12,4 @@ dist
 .qoder
 .secrets
 .pnpm-store
+dev-dist
