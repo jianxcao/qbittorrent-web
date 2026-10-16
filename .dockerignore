@@ -5,8 +5,7 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# 构建输出
-dist/
+# 构建输出（dist 由 host 编译生成并打包进镜像）
 .output/
 .nuxt/
 .next/
