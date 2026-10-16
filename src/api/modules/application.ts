@@ -115,3 +115,21 @@ export async function getNetworkInterfaceList(): Promise<Array<{ name: string; v
 export async function getNetworkInterfaceAddressList(iface: string = ''): Promise<string[]> {
   return get<string[]>('/app/networkInterfaceAddressList', { iface })
 }
+/**
+ * 轮换/重新生成 WebUI API Key
+ * POST /app/rotateAPIKey
+ * @requires qBittorrent v5.2+ (WebAPI v2.14.1+)
+ * @returns 新的 API Key 对象 { apiKey: string }
+ */
+export async function rotateAPIKey(): Promise<{ apiKey: string }> {
+  return post<{ apiKey: string }>('/app/rotateAPIKey')
+}
+
+/**
+ * 删除现有的 WebUI API Key
+ * POST /app/deleteAPIKey
+ * @requires qBittorrent v5.2+ (WebAPI v2.14.1+)
+ */
+export async function deleteAPIKey(): Promise<void> {
+  await post('/app/deleteAPIKey')
+}

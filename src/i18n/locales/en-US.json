@@ -829,7 +829,20 @@
         "maxAuthFailCount": "Ban client after consecutive failures",
         "banDuration": "Ban duration",
         "sessionTimeout": "Session timeout",
-        "seconds": "seconds"
+        "seconds": "seconds",
+        "apiKey": "WebUI API Key",
+        "apiKeyPlaceholder": "No API Key generated",
+        "copyApiKey": "Copy API key",
+        "copied": "Copied",
+        "generateApiKey": "Generate API key",
+        "rotateApiKey": "Rotate API key",
+        "deleteApiKey": "Delete API key",
+        "confirmGenerateTitle": "Generate API key",
+        "confirmRotateTitle": "Rotate API key",
+        "confirmDeleteTitle": "Delete API key",
+        "confirmGenerateMessage": "Generate an API key? This key can be used to interact with qBittorrent's API.",
+        "confirmRotateMessage": "Rotate this API key? The current key will immediately stop working and a new key will be generated.",
+        "confirmDeleteMessage": "Delete this API key? The current key will immediately stop working."
       },
       "alternativeUI": {
         "title": "Use alternative Web UI",

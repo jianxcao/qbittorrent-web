@@ -53,6 +53,67 @@
         />
       </n-form-item>
 
+      <template v-if="isApiKeySupported">
+        <n-form-item :label="$t('settings.webui.authentication.apiKey')">
+          <n-space align="center" :size="8">
+            <n-input
+              :value="maskedApiKey"
+              disabled
+              :placeholder="$t('settings.webui.authentication.apiKeyPlaceholder')"
+              style="width: 240px; font-family: monospace;"
+            />
+            <n-tooltip trigger="hover">
+              <template #trigger>
+                <n-button
+                  quaternary
+                  circle
+                  :disabled="!hasApiKey"
+                  @click="onCopyApiKey"
+                >
+                  <template #icon>
+                    <n-icon :size="18"><CopyOutline /></n-icon>
+                  </template>
+                </n-button>
+              </template>
+              {{ $t('settings.webui.authentication.copyApiKey') }}
+            </n-tooltip>
+
+            <n-tooltip trigger="hover">
+              <template #trigger>
+                <n-button
+                  quaternary
+                  circle
+                  :loading="apiKeyLoading"
+                  @click="onRotateApiKeyClick"
+                >
+                  <template #icon>
+                    <n-icon :size="18"><RefreshOutline /></n-icon>
+                  </template>
+                </n-button>
+              </template>
+              {{ hasApiKey ? $t('settings.webui.authentication.rotateApiKey') : $t('settings.webui.authentication.generateApiKey') }}
+            </n-tooltip>
+
+            <n-tooltip trigger="hover">
+              <template #trigger>
+                <n-button
+                  quaternary
+                  circle
+                  type="error"
+                  :disabled="!hasApiKey"
+                  :loading="apiKeyDeleteLoading"
+                  @click="onDeleteApiKeyClick"
+                >
+                  <template #icon>
+                    <n-icon :size="18"><TrashOutline /></n-icon>
+                  </template>
+                </n-button>
+              </template>
+              {{ $t('settings.webui.authentication.deleteApiKey') }}
+            </n-tooltip>
+          </n-space>
+        </n-form-item>
+      </template>
       <n-form-item :label="$t('settings.webui.authentication.bypassLocalAuth')">
         <n-checkbox v-model:checked="settingStore.preferences.bypass_local_auth" />
       </n-form-item>
@@ -215,16 +276,113 @@
 </template>
 
 <script setup lang="ts">
-import { useSettingStore } from '@/store'
+import { useSettingStore, useSessionStore } from '@/store'
 import { useIsSmallScreen } from '@/composables/useIsSmallScreen'
 import { useI18n } from 'vue-i18n'
+import { useMessage, useDialog } from 'naive-ui'
+import { CopyOutline, RefreshOutline, TrashOutline } from '@vicons/ionicons5'
+import { copyToClipboard, compareVersion } from '@/utils'
+import { rotateAPIKey, deleteAPIKey } from '@/api/modules/application'
 
 const { t: $t } = useI18n()
 const settingStore = useSettingStore()
+const sessionStore = useSessionStore()
 const isMobile = useIsSmallScreen()
+const message = useMessage()
+const dialog = useDialog()
 
 const labelPlacement = computed(() => (isMobile.value ? 'top' : 'left'))
 const newPassword = ref('')
+
+// qBittorrent 5.2+ (WebAPI 2.14.1+) 支持 API Key
+const isApiKeySupported = computed(() => {
+  const version = sessionStore.version
+  if (!version) {
+    // 若无法读取版本，但 preferences 中返回了 web_ui_api_key 字段，也可判定为支持
+    return settingStore.preferences.web_ui_api_key !== undefined
+  }
+  return compareVersion(version, '5.2.0') >= 0 || settingStore.preferences.web_ui_api_key !== undefined
+})
+
+const apiKey = computed(() => settingStore.preferences.web_ui_api_key || '')
+const hasApiKey = computed(() => apiKey.value.length > 0)
+
+// 遮罩显示 API Key（显示前4位与后6位，中间打码，若长度不足则全打码）
+const maskedApiKey = computed(() => {
+  const key = apiKey.value
+  if (!key) {
+    return ''
+  }
+  if (key.length <= 10) {
+    return '•'.repeat(key.length)
+  }
+  return key.slice(0, 4) + '•'.repeat(key.length - 10) + key.slice(key.length - 6)
+})
+
+const apiKeyLoading = ref(false)
+const apiKeyDeleteLoading = ref(false)
+
+async function onCopyApiKey() {
+  if (!apiKey.value) {
+    return
+  }
+  const success = await copyToClipboard(apiKey.value)
+  if (success) {
+    message.success($t('settings.webui.authentication.copied'))
+  }
+}
+
+function onRotateApiKeyClick() {
+  const isRotate = hasApiKey.value
+  const title = isRotate
+    ? $t('settings.webui.authentication.confirmRotateTitle')
+    : $t('settings.webui.authentication.confirmGenerateTitle')
+  const content = isRotate
+    ? $t('settings.webui.authentication.confirmRotateMessage')
+    : $t('settings.webui.authentication.confirmGenerateMessage')
+
+  dialog.warning({
+    title,
+    content,
+    positiveText: $t('common.confirm'),
+    negativeText: $t('common.cancel'),
+    onPositiveClick: async () => {
+      apiKeyLoading.value = true
+      try {
+        const res = await rotateAPIKey()
+        settingStore.preferences.web_ui_api_key = res.apiKey
+        message.success(title)
+      } catch (error) {
+        console.error('Failed to rotate API key:', error)
+        message.error(String(error))
+      } finally {
+        apiKeyLoading.value = false
+      }
+    }
+  })
+}
+
+function onDeleteApiKeyClick() {
+  dialog.error({
+    title: $t('settings.webui.authentication.confirmDeleteTitle'),
+    content: $t('settings.webui.authentication.confirmDeleteMessage'),
+    positiveText: $t('common.confirm'),
+    negativeText: $t('common.cancel'),
+    onPositiveClick: async () => {
+      apiKeyDeleteLoading.value = true
+      try {
+        await deleteAPIKey()
+        settingStore.preferences.web_ui_api_key = ''
+        message.success($t('settings.webui.authentication.deleteApiKey'))
+      } catch (error) {
+        console.error('Failed to delete API key:', error)
+        message.error(String(error))
+      } finally {
+        apiKeyDeleteLoading.value = false
+      }
+    }
+  })
+}
 
 const languageOptions = computed(() => [
   { label: '简体中文', value: 'zh-CN' },

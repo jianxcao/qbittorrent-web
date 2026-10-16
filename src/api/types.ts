@@ -301,6 +301,7 @@ export interface AppPreferences {
   web_ui_upnp?: boolean // 是否对 Web UI 使用 UPnP 端口转发
   web_ui_username?: string // Web UI 用户名
   web_ui_password?: string // Web UI 密码
+  web_ui_api_key?: string // Web UI API Key (qBittorrent v5.2+, WebAPI v2.14.1+)
   use_https?: boolean // 是否使用 HTTPS
   web_ui_https_cert_path?: string // HTTPS 证书文件路径
   web_ui_https_key_path?: string // HTTPS 密钥文件路径

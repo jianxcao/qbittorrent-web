@@ -829,7 +829,20 @@
         "maxAuthFailCount": "连续失败后禁止客户端",
         "banDuration": "禁止时长",
         "sessionTimeout": "会话超时",
-        "seconds": "秒"
+        "seconds": "秒",
+        "apiKey": "WebUI API Key",
+        "apiKeyPlaceholder": "未生成 API Key",
+        "copyApiKey": "复制 API Key",
+        "copied": "已复制",
+        "generateApiKey": "生成 API Key",
+        "rotateApiKey": "重新生成 API Key",
+        "deleteApiKey": "删除 API Key",
+        "confirmGenerateTitle": "生成 API Key",
+        "confirmRotateTitle": "重新生成 API Key",
+        "confirmDeleteTitle": "删除 API Key",
+        "confirmGenerateMessage": "确定要生成 API Key 吗？该 Key 可用于访问 qBittorrent WebAPI。",
+        "confirmRotateMessage": "确定要重新生成 API Key 吗？当前 Key 将立即失效并生成新的 Key。",
+        "confirmDeleteMessage": "确定要删除该 API Key 吗？当前 Key 将立即失效。"
       },
       "alternativeUI": {
         "title": "使用备选 WebUI",
