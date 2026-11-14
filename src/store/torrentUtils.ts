@@ -138,6 +138,17 @@ export const mapToOptions = (map: Map<string, IMenuItem>, total: number) => {
   ]
 }
 
+// 名称搜索：不区分大小写，并把点、空格、下划线和连字符当成同一种分隔符
+export const normalizeSearchText = (value: string) => value.toLowerCase().replace(/[.\s_-]+/g, ' ').trim()
+
+export const matchesTorrentSearch = (name: string, keyword: string) => {
+  const query = normalizeSearchText(keyword)
+  if (!query) {
+    return true
+  }
+  return normalizeSearchText(name).includes(query)
+}
+
 // 是否可以过滤这个种子
 export const isFilterTorrents = function (
   t: Torrent,
@@ -153,7 +164,7 @@ export const isFilterTorrents = function (
   let shouldInclude = true
 
   // 搜索过滤
-  if (search.value && !t.name.includes(search.value)) {
+  if (search.value && !matchesTorrentSearch(t.name, search.value)) {
     shouldInclude = false
   }
 
