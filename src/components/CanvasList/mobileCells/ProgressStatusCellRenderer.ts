@@ -6,6 +6,7 @@ import { Rect, Text } from 'leafer-ui'
 import { FONT_FAMILY } from '../constant'
 import { MOBILE_CELL_SPACING } from '../mobileConstants'
 import type { MobileCellRenderContext, MobileCellRenderer } from '../mobileTypes'
+import { cachedThemeColor } from '@/utils/themeColor'
 
 /**
  * 进度状态 Cell 渲染器
@@ -149,7 +150,9 @@ class ProgressStatusCellRenderer implements MobileCellRenderer {
 
     // 获取状态颜色
     const statusColor = stateInfo?.color || theme.textColor2
-    const bgColor = colord(statusColor).alpha(0.15).toRgbString()
+    const bgColor = cachedThemeColor(theme, `mobile-status-bg-${statusColor}`, () =>
+      colord(statusColor).alpha(0.15).toRgbString()
+    )
 
     // 背景标签
     const tagBg = new Rect({

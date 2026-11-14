@@ -9,6 +9,7 @@ import { defineStore } from 'pinia'
 import { computed, ref, watch } from 'vue'
 import {
   detailFilterOptions,
+  initFilterOptions,
   isFilterTorrents,
   mapToOptions,
   processTorrent,
@@ -69,15 +70,14 @@ export const useTorrentStore = defineStore('torrent', () => {
 
   // 真正的一次循环计算所有数据
   const computedData = computed(() => {
-    // 初始化统计集合
+    // 初始化统计集合（tags/categories/status 元数据一次性初始化，移出 per-torrent 循环）
     const tagsSet = new Map<string, IMenuItem>()
-    tagsSet.set('noTags', { count: 0, label: '无标签' })
     const trackerSet = new Map<string, IMenuItem>()
     const errorStringSet = new Map<string, IMenuItem>()
     const downloadDirSet = new Map<string, IMenuItem>()
     const statusSet = new Map<string, IMenuItem>()
     const categoriesSet = new Map<string, IMenuItem>()
-    categoriesSet.set('noCategory', { count: 0, label: '无分类' })
+    initFilterOptions(tagsSet, categoriesSet, statusSet, allTags.value, allCategories.value)
 
     // 存储过滤后的结果
     const filtered: Torrent[] = []
@@ -87,18 +87,8 @@ export const useTorrentStore = defineStore('torrent', () => {
     // 一次循环完成所有计算：统计 + 过滤
     torrents.value.forEach((t) => {
       mapTorrentsHash[t.hash] = t
-      // 将选项全部放到 map 中
-      detailFilterOptions(
-        t,
-        tagsSet,
-        trackerSet,
-        errorStringSet,
-        downloadDirSet,
-        statusSet,
-        categoriesSet,
-        allTags.value,
-        allCategories.value
-      )
+      // 将选项累加到 map（线性复杂度）
+      detailFilterOptions(t, tagsSet, trackerSet, errorStringSet, downloadDirSet, statusSet, categoriesSet)
       // 如果通过所有过滤条件，加入结果数组
       if (
         isFilterTorrents(

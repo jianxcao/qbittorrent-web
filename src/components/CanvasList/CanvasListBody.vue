@@ -106,19 +106,19 @@ function cancelScheduledRender() {
   }
 }
 
-// 数据变化触发全量重建。
-// 注意：这里不监听 visibleRange，也不使用 deep。
-// 数组引用在每次轮询/选中变化时都会重新生成，浅比较即可，
-// deep 会对上千个 torrent 做深度遍历，代价高昂。
-// hover 单独用增量更新处理（见下方 watch），不触发全量重建。
+// 结构性变化（列/主题/选择模式）需要全量重建。
+// 数据（filterTorrents 引用）和选中变化走 renderVisibleRows 内部的增量 diff。
 watch(
-  () => [
-    torrentStore.filterTorrents,
-    torrentStore.selectedKeys,
-    torrentStore.visibleColumns,
-    settingStore.themeVars,
-    toolbarStore.selectMode
-  ],
+  () => [torrentStore.visibleColumns, settingStore.themeVars, toolbarStore.selectMode],
+  () => {
+    forceFullRender = true
+    scheduleRender()
+  }
+)
+
+// 数据 + 选中变化：增量 diff 重建（内部判断结构是否变化）
+watch(
+  () => [torrentStore.filterTorrents, torrentStore.selectedKeys],
   () => {
     scheduleRender()
   }
@@ -264,9 +264,8 @@ function renderStickyRowGroup(params: {
   }
 
   attachRowEvents(rowGroup, rowIndex, true)
-  stickyGroup.add(rowGroup)
-  // 返回背景 rect，供 hover 增量更新使用（sticky 背景是第 2 个子节点）
-  return stickyBg
+  // 返回行 group 和背景 rect，供增量更新使用（sticky 背景是第 2 个子节点）
+  return { group: rowGroup, bgRect: stickyBg }
 }
 
 function renderRowGroup(params: {
@@ -331,22 +330,38 @@ function renderRowGroup(params: {
   return { group: rowGroup, bgRect: rowBg }
 }
 
-// 记录每行的背景 rect（key 为行索引），用于 hover 增量更新，避免全量重建
-// scroll 区域和 sticky 区域分别记录
+// 记录每行的背景 rect（key 为绝对行索引），用于 hover/选中增量更新
 const scrollBgRects = new Map<number, any>()
 const stickyBgRects = new Map<number, any>()
+
+// 增量渲染缓存（按可见区相对索引存放）
+let lastVisibleHashes: string[] = []
+let lastRowFingerprints: string[] = []
+let scrollRows: (Group | null)[] = []
+let stickyRows: (Group | null)[] = []
+
+// 结构性变化（列/主题/选择模式）需要强制全量重建
+let forceFullRender = true
+
+// 补充字段：renderer 除列值外还会读取这些字段，需纳入指纹
+const FINGERPRINT_EXTRA_FIELDS = ['state', 'num_complete', 'num_incomplete', 'tags', 'tagsArray']
+
+function buildRowFingerprint(torrent: any, columns: any[], isSelected: boolean): string {
+  const parts: string[] = [isSelected ? '1' : '0']
+  for (const col of columns) {
+    parts.push(String(torrent[col.key]))
+  }
+  for (const field of FINGERPRINT_EXTRA_FIELDS) {
+    parts.push(String(torrent[field]))
+  }
+  return parts.join('|')
+}
 
 // 渲染可见行
 function renderVisibleRows() {
   if (!scrollGroup) {
     return
   }
-
-  // 清空现有内容
-  scrollGroup.clear()
-  stickyGroup?.clear()
-  scrollBgRects.clear()
-  stickyBgRects.clear()
 
   const { startIndex, endIndex } = visibleRange.value
   const torrents = torrentStore.filterTorrents
@@ -359,67 +374,179 @@ function renderVisibleRows() {
   const rowTotalWidth = selectMode ? torrentStore.tableMinWidth + CHECKBOX_WIDTH : torrentStore.tableMinWidth
   const scrollRowWidth = rowTotalWidth - CHECKBOX_WIDTH
 
-  // 渲染每一行
-  for (let i = startIndex; i <= endIndex; i++) {
-    if (i >= torrents.length) {
-      break
+  // 计算当前可见行的 hash 序列，用于判断是否发生排序/过滤/滚动跨区（需全量重建）
+  const currentHashes: string[] = []
+  let structureChanged = forceFullRender
+  if (!structureChanged) {
+    for (let i = startIndex; i <= endIndex && i < torrents.length; i++) {
+      currentHashes.push(torrents[i].hash)
     }
-
-    const torrent = torrents[i]
-    const isSelected = selectedKeysSet.has(torrent.hash)
-    const isHover = hoverRowIndex.value === i
-    const rowY = i * ROW_HEIGHT
-
-    // 绘制行背景 - 优先级：选中 > Hover > 单双行变色
-    const isEven = i % 2 === 0
-    const { scrollBgColor, stickyBgColor } = getRowBgColors({ isSelected, isHover, isEven, theme })
-
-    // 选择模式开启：checkbox 首列需要“固定”，因此拆分为 stickyGroup + scrollGroup 两层渲染
-    if (selectMode) {
-      const stickyBg = renderStickyRowGroup({
-        rowIndex: i,
-        rowY,
-        torrent,
-        isSelected,
-        bgColor: stickyBgColor,
-        theme
-      })
-
-      const scrollRow = renderRowGroup({
-        rowIndex: i,
-        rowY,
-        xStart: CHECKBOX_WIDTH,
-        width: scrollRowWidth,
-        torrent,
-        columns,
-        isSelected,
-        bgColor: scrollBgColor,
-        theme
-      })
-      scrollGroup.add(scrollRow.group)
-      if (scrollRow.bgRect) {
-        scrollBgRects.set(i, scrollRow.bgRect)
-      }
-      if (stickyBg) {
-        stickyBgRects.set(i, stickyBg)
-      }
+    if (currentHashes.length !== lastVisibleHashes.length) {
+      structureChanged = true
     } else {
-      // 非选择模式：直接渲染为单层（随 scrollLeft 平移）
-      const rowGroup = renderRowGroup({
-        rowIndex: i,
-        rowY,
-        xStart: 0,
-        width: rowTotalWidth,
-        torrent,
-        columns,
-        isSelected,
-        bgColor: scrollBgColor,
-        theme
-      })
-      scrollGroup.add(rowGroup.group)
-      if (rowGroup.bgRect) {
-        scrollBgRects.set(i, rowGroup.bgRect)
+      for (let i = 0; i < currentHashes.length; i++) {
+        if (currentHashes[i] !== lastVisibleHashes[i]) {
+          structureChanged = true
+          break
+        }
       }
+    }
+  }
+
+  if (structureChanged) {
+    // 全量重建：清空所有节点后重建可见行
+    forceFullRender = false
+    scrollGroup.clear()
+    stickyGroup?.clear()
+    scrollBgRects.clear()
+    stickyBgRects.clear()
+    lastVisibleHashes = []
+    lastRowFingerprints = []
+    scrollRows = []
+    stickyRows = []
+
+    for (let i = startIndex; i <= endIndex && i < torrents.length; i++) {
+      const torrent = torrents[i]
+      const isSelected = selectedKeysSet.has(torrent.hash)
+      const isHover = hoverRowIndex.value === i
+      const rowY = i * ROW_HEIGHT
+      const isEven = i % 2 === 0
+      const { scrollBgColor, stickyBgColor } = getRowBgColors({ isSelected, isHover, isEven, theme })
+
+      if (selectMode) {
+        const stickyRow = renderStickyRowGroup({
+          rowIndex: i,
+          rowY,
+          torrent,
+          isSelected,
+          bgColor: stickyBgColor,
+          theme
+        })!
+        stickyGroup!.add(stickyRow.group)
+        if (stickyRow.bgRect) {
+          stickyBgRects.set(i, stickyRow.bgRect)
+        }
+
+        const scrollRow = renderRowGroup({
+          rowIndex: i,
+          rowY,
+          xStart: CHECKBOX_WIDTH,
+          width: scrollRowWidth,
+          torrent,
+          columns,
+          isSelected,
+          bgColor: scrollBgColor,
+          theme
+        })
+        scrollGroup.add(scrollRow.group)
+        if (scrollRow.bgRect) {
+          scrollBgRects.set(i, scrollRow.bgRect)
+        }
+        stickyRows.push(stickyRow.group)
+        scrollRows.push(scrollRow.group)
+      } else {
+        const rowGroup = renderRowGroup({
+          rowIndex: i,
+          rowY,
+          xStart: 0,
+          width: rowTotalWidth,
+          torrent,
+          columns,
+          isSelected,
+          bgColor: scrollBgColor,
+          theme
+        })
+        scrollGroup.add(rowGroup.group)
+        if (rowGroup.bgRect) {
+          scrollBgRects.set(i, rowGroup.bgRect)
+        }
+        stickyRows.push(null)
+        scrollRows.push(rowGroup.group)
+      }
+
+      lastVisibleHashes.push(torrent.hash)
+      lastRowFingerprints.push(buildRowFingerprint(torrent, columns, isSelected))
+    }
+  } else {
+    // 增量更新：hash 序列未变（仅轮询数据/选中态变化），只重建值变化的行
+    let relIdx = 0
+    for (let i = startIndex; i <= endIndex && i < torrents.length; i++, relIdx++) {
+      const torrent = torrents[i]
+      const isSelected = selectedKeysSet.has(torrent.hash)
+      const fingerprint = buildRowFingerprint(torrent, columns, isSelected)
+
+      if (fingerprint === lastRowFingerprints[relIdx]) {
+        continue
+      }
+
+      const isHover = hoverRowIndex.value === i
+      const rowY = i * ROW_HEIGHT
+      const isEven = i % 2 === 0
+      const { scrollBgColor, stickyBgColor } = getRowBgColors({ isSelected, isHover, isEven, theme })
+
+      if (selectMode) {
+        const stickyRow = renderStickyRowGroup({
+          rowIndex: i,
+          rowY,
+          torrent,
+          isSelected,
+          bgColor: stickyBgColor,
+          theme
+        })!
+        const oldSticky = stickyRows[relIdx]
+        if (oldSticky) {
+          stickyGroup!.remove(oldSticky)
+        }
+        stickyGroup!.addAt(stickyRow.group, relIdx)
+        if (stickyRow.bgRect) {
+          stickyBgRects.set(i, stickyRow.bgRect)
+        }
+
+        const scrollRow = renderRowGroup({
+          rowIndex: i,
+          rowY,
+          xStart: CHECKBOX_WIDTH,
+          width: scrollRowWidth,
+          torrent,
+          columns,
+          isSelected,
+          bgColor: scrollBgColor,
+          theme
+        })
+        const oldScroll = scrollRows[relIdx]
+        if (oldScroll) {
+          scrollGroup.remove(oldScroll)
+        }
+        scrollGroup.addAt(scrollRow.group, relIdx)
+        if (scrollRow.bgRect) {
+          scrollBgRects.set(i, scrollRow.bgRect)
+        }
+        stickyRows[relIdx] = stickyRow.group
+        scrollRows[relIdx] = scrollRow.group
+      } else {
+        const rowGroup = renderRowGroup({
+          rowIndex: i,
+          rowY,
+          xStart: 0,
+          width: rowTotalWidth,
+          torrent,
+          columns,
+          isSelected,
+          bgColor: scrollBgColor,
+          theme
+        })
+        const oldScroll = scrollRows[relIdx]
+        if (oldScroll) {
+          scrollGroup.remove(oldScroll)
+        }
+        scrollGroup.addAt(rowGroup.group, relIdx)
+        if (rowGroup.bgRect) {
+          scrollBgRects.set(i, rowGroup.bgRect)
+        }
+        scrollRows[relIdx] = rowGroup.group
+      }
+
+      lastRowFingerprints[relIdx] = fingerprint
     }
   }
 }

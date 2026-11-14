@@ -18,7 +18,40 @@ export interface IMenuItem {
   label?: string
 }
 
-// 将所有的选项放到 map
+// 初始化过滤选项 map（只做一次，count 从 0 开始）。
+// 移出 per-torrent 循环，消除 O(N × tags + N × categories) 的嵌套遍历，
+// 并预计算 status filter 的 label 字符串，避免每 torrent 重复调用 i18n t()。
+export const initFilterOptions = function (
+  tagsSet: Map<string, IMenuItem>,
+  categoriesSet: Map<string, IMenuItem>,
+  statusSet: Map<string, IMenuItem>,
+  globalTags: string[],
+  globalCategories: Record<string, Category>
+) {
+  const $t = i18n.global.t
+  tagsSet.set('noTags', { count: 0, label: $t('common.noTags') })
+  for (let i = 0; i < globalTags.length; i++) {
+    tagsSet.set(globalTags[i], { count: 0 })
+  }
+  categoriesSet.set('noCategory', { count: 0, label: $t('common.noCategory') })
+  const catKeys = Object.keys(globalCategories)
+  for (let i = 0; i < catKeys.length; i++) {
+    categoriesSet.set(catKeys[i], { count: 0 })
+  }
+  // 预计算 status 元数据：icon/color/label 只算一次，count 后续单独累加
+  for (let i = 0; i < qbStatusFilters.length; i++) {
+    const filter = qbStatusFilters[i]
+    statusSet.set(filter.key, {
+      icon: filter.icon,
+      color: filter.color,
+      label: filter.label($t),
+      count: 0
+    })
+  }
+}
+
+// 将单个 torrent 累加到各过滤选项 map。
+// 每 torrent 只遍历自身 tags 数 + 1 个分类 + statusFilters 数，复杂度线性。
 export const detailFilterOptions = function (
   t: Torrent,
   tagsSet: Map<string, IMenuItem>,
@@ -26,26 +59,29 @@ export const detailFilterOptions = function (
   errorStringSet: Map<string, IMenuItem>,
   downloadDirSet: Map<string, IMenuItem>,
   statusSet: Map<string, IMenuItem>,
-  categoriesSet: Map<string, IMenuItem>,
-  globalTags: string[],
-  globalCategories: Record<string, Category>
+  categoriesSet: Map<string, IMenuItem>
 ) {
   const $t = i18n.global.t
   const settingStore = useSettingStore()
-  // === 1. 统计各种选项（用于生成过滤选项） ===
-  // 标签统计 - 使用全局标签列表
-  globalTags.forEach((tag: string) => {
-    const prev = tagsSet.get(tag)
-    // 即使 count 为 0 也要初始化
-    tagsSet.set(tag, { count: (prev?.count || 0) + (t.tagsArray?.includes(tag) ? 1 : 0) })
-  })
-  // 统计无标签的种子
-  if (!t.tagsArray || t.tagsArray.length === 0) {
+
+  // === 1. 标签统计：只遍历该 torrent 实际拥有的标签 ===
+  const tagCounts = t.tagsArray
+  if (tagCounts && tagCounts.length > 0) {
+    for (let i = 0; i < tagCounts.length; i++) {
+      const tag = tagCounts[i]
+      const prev = tagsSet.get(tag)
+      if (prev) {
+        prev.count++
+      }
+    }
+  } else {
     const prev = tagsSet.get('noTags')
-    tagsSet.set('noTags', { count: (prev?.count || 0) + 1, label: $t('common.noTags') })
+    if (prev) {
+      prev.count++
+    }
   }
 
-  // tracker 统计 - 使用qBittorrent字段
+  // === 2. tracker 统计 ===
   if (t.tracker) {
     let host = t.trackerHost || ''
     if (!host && t.tracker) {
@@ -56,7 +92,6 @@ export const detailFilterOptions = function (
       }
     }
     const prefixMatch = settingStore.ignoredTrackerPrefixesReg.exec(host)
-    // console.debug("prefixMatch", prefixMatch, settingStore.ignoredTrackerPrefixesReg)
     if (prefixMatch?.groups !== undefined) {
       host = host.substring(prefixMatch.groups.prefix.length + 1)
     }
@@ -67,45 +102,42 @@ export const detailFilterOptions = function (
     trackerSet.set('noTracker', { count: (prev?.count || 0) + 1, label: $t('common.noTracker') })
   }
 
-  // error 统计 - 使用qBittorrent字段
+  // === 3. error 统计 ===
   if (t.state === 'error' || t.state === 'missingFiles') {
     const errorMsg = t.state === 'error' ? 'Error' : 'Missing Files'
     const prev = errorStringSet.get(errorMsg)
     errorStringSet.set(errorMsg, { count: (prev?.count || 0) + 1, color: 'var(--error-color)' })
   }
 
-  // 分类统计 - 使用qBittorrent字段
-  Object.keys(globalCategories).forEach((categoryName: string) => {
-    const prev = categoriesSet.get(categoryName)
-    // 即使 count 为 0 也要初始化
-    categoriesSet.set(categoryName, { count: (prev?.count || 0) + (t.category === categoryName ? 1 : 0) })
-  })
-  // 统计无分类的种子
-  if (!t.category || t.category === '') {
+  // === 4. 分类统计：O(1) 查该 torrent 的分类 ===
+  if (t.category) {
+    const prev = categoriesSet.get(t.category)
+    if (prev) {
+      prev.count++
+    }
+  } else {
     const prev = categoriesSet.get('noCategory')
-    categoriesSet.set('noCategory', { count: (prev?.count || 0) + 1, label: $t('common.noCategory') })
+    if (prev) {
+      prev.count++
+    }
   }
 
-  // downloadDir 统计 - 使用qBittorrent字段
+  // === 5. downloadDir 统计 ===
   if (t.save_path) {
     const prev = downloadDirSet.get(t.save_path)
     downloadDirSet.set(t.save_path, { count: (prev?.count || 0) + 1 })
   }
 
-  // status 统计 - 使用qBittorrent状态过滤器
-  qbStatusFilters.forEach((filter) => {
-    const prev = statusSet.get(filter.key)
-    let count = prev?.count || 0
+  // === 6. status 统计：只累加 count，元数据已在 initFilterOptions 预计算 ===
+  for (let i = 0; i < qbStatusFilters.length; i++) {
+    const filter = qbStatusFilters[i]
     if (filter.filter(t)) {
-      count++
+      const prev = statusSet.get(filter.key)
+      if (prev) {
+        prev.count++
+      }
     }
-    statusSet.set(filter.key, {
-      icon: filter.icon,
-      color: filter.color,
-      label: filter.label($t),
-      count: count
-    })
-  })
+  }
 }
 
 // 将 map 转换成数组

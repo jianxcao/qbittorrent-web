@@ -4,6 +4,7 @@ import { colord } from 'colord'
 import type { Group as LeaferGroup } from 'leafer-ui'
 import { FONT_FAMILY } from '../constant'
 import { measureTextWidth } from '@/utils'
+import { cachedThemeColor } from '@/utils/themeColor'
 
 /**
  * Category 标签单元格渲染器
@@ -38,14 +39,18 @@ export class CategoryCellRenderer implements CellRenderer {
     const tagY = y + (height - tagHeight) / 2
 
     // Tag 背景颜色 - 使用主题色的浅色版本
-    const tagBgColor = isSelected
-      ? colord(theme.primaryColor).alpha(0.3).mix(theme.cardColor, 0.7).toRgbString()
-      : colord(theme.primaryColor).alpha(0.15).mix(theme.cardColor, 0.85).toRgbString()
+    const tagBgColor = cachedThemeColor(theme, `category-bg-${isSelected}`, () =>
+      isSelected
+        ? colord(theme.primaryColor).alpha(0.3).mix(theme.cardColor, 0.7).toRgbString()
+        : colord(theme.primaryColor).alpha(0.15).mix(theme.cardColor, 0.85).toRgbString()
+    )
 
     // Tag 文本颜色
-    const tagTextColor = isSelected
-      ? theme.primaryColor
-      : colord(theme.primaryColor).alpha(0.8).mix(theme.textColor2, 0.2).toRgbString()
+    const tagTextColor = cachedThemeColor(theme, `category-text-${isSelected}`, () =>
+      isSelected
+        ? theme.primaryColor
+        : colord(theme.primaryColor).alpha(0.8).mix(theme.textColor2, 0.2).toRgbString()
+    )
 
     // 创建 tag 组
     const tagGroup = new Group()

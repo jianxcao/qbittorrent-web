@@ -3,6 +3,7 @@ import { Rect, Text } from 'leafer-ui'
 import { colord } from 'colord'
 import type { Group } from 'leafer-ui'
 import { FONT_FAMILY } from '../constant'
+import { cachedThemeColor } from '@/utils/themeColor'
 
 /**
  * 进度条单元格渲染器
@@ -45,7 +46,7 @@ export class ProgressCellRenderer implements CellRenderer {
         y: barY,
         width: fillWidth,
         height: barHeight,
-        fill: colord(theme.primaryColor).alpha(0.2).toRgbString(),
+        fill: cachedThemeColor(theme, 'progress-fill', () => colord(theme.primaryColor).alpha(0.2).toRgbString()),
         cornerRadius
       })
       leaferGroup.add(fillRect)

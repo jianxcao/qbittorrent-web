@@ -4,6 +4,7 @@ import { colord } from 'colord'
 import { FONT_FAMILY } from '../constant'
 import { MENU_BUTTON_MARGIN, MENU_BUTTON_SIZE, MOBILE_CELL_SPACING } from '../mobileConstants'
 import type { MobileCellRenderContext, MobileCellRenderer } from '../mobileTypes'
+import { cachedThemeColor } from '@/utils/themeColor'
 
 /**
  * 名称 Cell 渲染器
@@ -75,8 +76,12 @@ class NameCellRenderer implements MobileCellRenderer {
     const tagWidth = Math.min(textWidth + tagPaddingX * 2, maxTagWidth)
     const maxTextWidth = Math.min(maxTagWidth, textWidth)
     // Tag 背景颜色
-    const tagBgColor = colord(theme.primaryColor).alpha(0.15).mix(theme.cardColor, 0.1).toRgbString()
-    const tagTextColor = colord(theme.primaryColor).alpha(0.9).mix(theme.textColor2, 0.1).toRgbString()
+    const tagBgColor = cachedThemeColor(theme, 'mobile-name-category-bg', () =>
+      colord(theme.primaryColor).alpha(0.15).mix(theme.cardColor, 0.1).toRgbString()
+    )
+    const tagTextColor = cachedThemeColor(theme, 'mobile-name-category-text', () =>
+      colord(theme.primaryColor).alpha(0.9).mix(theme.textColor2, 0.1).toRgbString()
+    )
 
     // 绘制 tag 背景
     const tagBox = new Box({
