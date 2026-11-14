@@ -887,7 +887,14 @@
         "themeDark": "Dark",
         "torrentListRefreshInterval": "Torrent list refresh interval",
         "torrentDetailRefreshInterval": "Torrent detail refresh interval",
-        "seconds": "seconds"
+        "seconds": "seconds",
+        "transfer": "Settings transfer",
+        "transferHint": "Import or export this UI layout and preferences. Login credentials are excluded",
+        "export": "Export",
+        "import": "Import",
+        "exportSuccess": "Settings exported",
+        "importSuccess": "Settings imported, reloading",
+        "importFailed": "Invalid settings file"
       }
     },
     "tagsCategories": {

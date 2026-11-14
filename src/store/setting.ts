@@ -177,6 +177,51 @@ export const useSettingStore = defineStore('setting', () => {
     setting.value.ignoredTrackerPrefixes = prefixes
   }
 
+  const FRONTEND_STORAGE_KEYS = ['setting', 'torrent-columns', 'sidebarWidth', 'detailHeight', 'sidebarVisible', 'pcDetailVisible'] as const
+
+  function exportFrontendSettings() {
+    const data: Record<string, string | null> = {}
+    for (const key of FRONTEND_STORAGE_KEYS) {
+      data[key] = localStorage.getItem(key)
+    }
+    if (data.setting) {
+      const parsed = JSON.parse(data.setting)
+      delete parsed.apiKey
+      delete parsed.domain
+      data.setting = JSON.stringify(parsed)
+    }
+    return {
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      data
+    }
+  }
+
+  function importFrontendSettings(payload: { version?: number; data?: Record<string, string | null> }) {
+    if (payload?.version !== 1 || !payload.data || typeof payload.data !== 'object') {
+      throw new Error('invalid frontend settings')
+    }
+    const current = JSON.parse(localStorage.getItem('setting') || '{}')
+    for (const key of FRONTEND_STORAGE_KEYS) {
+      if (!(key in payload.data)) {
+        continue
+      }
+      const value = payload.data[key]
+      if (value == null) {
+        localStorage.removeItem(key)
+        continue
+      }
+      if (key === 'setting') {
+        const imported = JSON.parse(value)
+        imported.apiKey = current.apiKey || ''
+        imported.domain = current.domain || window.location.origin
+        localStorage.setItem(key, JSON.stringify(imported))
+        continue
+      }
+      localStorage.setItem(key, value)
+    }
+  }
+
   const ignoredTrackerPrefixesReg = computed(() => {
     return new RegExp(`^(?<prefix>(${setting.value.ignoredTrackerPrefixes.join('|')})\\d*)\\.[^.]+\\.[^.]+$`, 'i')
   })
@@ -205,6 +250,8 @@ export const useSettingStore = defineStore('setting', () => {
     fetchSpeedLimitMode,
     toggleSpeedLimitMode,
     changeIgnoredTrackerPrefixes,
-    ignoredTrackerPrefixesReg
+    ignoredTrackerPrefixesReg,
+    exportFrontendSettings,
+    importFrontendSettings
   }
 })

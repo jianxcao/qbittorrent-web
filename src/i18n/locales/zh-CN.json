@@ -887,7 +887,14 @@
         "themeDark": "暗黑",
         "torrentListRefreshInterval": "种子列表刷新间隔",
         "torrentDetailRefreshInterval": "种子详情刷新间隔",
-        "seconds": "秒"
+        "seconds": "秒",
+        "transfer": "配置迁移",
+        "transferHint": "导入或导出本界面的布局和偏好，不包含登录凭据",
+        "export": "导出配置",
+        "import": "导入配置",
+        "exportSuccess": "配置已导出",
+        "importSuccess": "配置已导入，正在刷新",
+        "importFailed": "配置文件无效"
       }
     },
     "tagsCategories": {

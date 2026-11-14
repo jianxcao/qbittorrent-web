@@ -271,6 +271,16 @@
           <template #suffix>{{ $t('settings.webui.frontend.seconds') }}</template>
         </n-input-number>
       </n-form-item>
+
+      <n-divider title-placement="left">
+        {{ $t('settings.webui.frontend.transfer') }}
+      </n-divider>
+      <n-form-item :label="$t('settings.webui.frontend.transferHint')">
+        <n-space>
+          <n-button @click="onExportFrontendSettings">{{ $t('settings.webui.frontend.export') }}</n-button>
+          <n-button @click="onImportFrontendSettings">{{ $t('settings.webui.frontend.import') }}</n-button>
+        </n-space>
+      </n-form-item>
     </n-form>
   </div>
 </template>
@@ -292,6 +302,40 @@ const message = useMessage()
 const dialog = useDialog()
 
 const labelPlacement = computed(() => (isMobile.value ? 'top' : 'left'))
+
+function onExportFrontendSettings() {
+  const payload = settingStore.exportFrontendSettings()
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = 'qb-web-settings.json'
+  link.click()
+  URL.revokeObjectURL(url)
+  message.success($t('settings.webui.frontend.exportSuccess'))
+}
+
+function onImportFrontendSettings() {
+  const input = document.createElement('input')
+  input.type = 'file'
+  input.accept = 'application/json,.json'
+  input.onchange = async () => {
+    const file = input.files?.[0]
+    if (!file) {
+      return
+    }
+    try {
+      const payload = JSON.parse(await file.text())
+      settingStore.importFrontendSettings(payload)
+      message.success($t('settings.webui.frontend.importSuccess'))
+      window.location.reload()
+    } catch (error) {
+      console.error(error)
+      message.error($t('settings.webui.frontend.importFailed'))
+    }
+  }
+  input.click()
+}
 const newPassword = ref('')
 
 // qBittorrent 5.2+ (WebAPI 2.14.1+) 支持 API Key
