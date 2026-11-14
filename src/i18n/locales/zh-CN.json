@@ -113,7 +113,9 @@
     "pleaseSelectFile": "请先选择种子文件",
     "pleaseSelectDir": "请选择下载目录",
     "pleaseInputMagnet": "请输入磁力链接",
-    "readFileFailed": "读取文件失败"
+    "readFileFailed": "读取文件失败",
+    "dropTorrent": "松开以添加种子",
+    "onlyTorrent": "仅支持 .torrent 文件"
   },
   "deleteDialog": {
     "title": "删除种子确认",

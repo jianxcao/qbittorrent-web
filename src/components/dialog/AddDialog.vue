@@ -10,7 +10,13 @@
     <n-el class="add-dialog-content">
       <n-form :model="form" :label-placement="labelType" :label-width="labelType === 'top' ? undefined : 120">
         <n-form-item :label="$t('addDialog.torrentFile')" required v-if="props.type === 'file'">
-          <n-upload accept=".torrent" @change="onFileChange" :default-upload="false" multiple>
+          <n-upload
+            accept=".torrent"
+            :default-file-list="uploadFileList"
+            @change="onFileChange"
+            :default-upload="false"
+            multiple
+          >
             <n-button>{{ $t('addDialog.selectFile') }}</n-button>
           </n-upload>
         </n-form-item>
@@ -140,6 +146,7 @@ const { autoTMMOptions, contentLayoutOptions, stopConditionOptions } = useTorren
 
 const props = defineProps<{
   type: 'file' | 'magnet'
+  initialFiles?: File[]
 }>()
 
 const show = defineModel<boolean>('show', { required: true })
@@ -147,6 +154,7 @@ const message = useMessage()
 const loading = ref(false)
 const magnetLink = ref('')
 const torrentFiles = ref<File[]>([])
+const uploadFileList = ref<UploadFileInfo[]>([])
 const tags = ref<string[]>([])
 const startDirectly = ref(true)
 
@@ -283,7 +291,14 @@ watch(show, async (v) => {
       upLimit: ''
     })
     magnetLink.value = ''
-    torrentFiles.value = []
+    const dropped = (props.initialFiles || []).filter((file) => file.name.toLowerCase().endsWith('.torrent'))
+    torrentFiles.value = dropped
+    uploadFileList.value = dropped.map((file, index) => ({
+      id: `dropped-${index}-${file.name}`,
+      name: file.name,
+      status: 'finished',
+      file
+    }))
     tags.value = []
     // 根据 preferences 的 start_paused_enabled 设置默认是否直接开始
     startDirectly.value = !prefs.add_stopped_enabled

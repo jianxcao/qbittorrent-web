@@ -113,7 +113,9 @@
     "pleaseSelectFile": "Please select torrent file first",
     "pleaseSelectDir": "Please select download directory",
     "pleaseInputMagnet": "Please enter magnet link",
-    "readFileFailed": "Failed to read file"
+    "readFileFailed": "Failed to read file",
+    "dropTorrent": "Drop to add torrent",
+    "onlyTorrent": "Only .torrent files are supported"
   },
   "deleteDialog": {
     "title": "Delete Torrent Confirmation",

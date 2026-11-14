@@ -37,6 +37,8 @@
 
     <!-- Footer -->
     <StatusBar class="footer" />
+    <div v-if="dropActive" class="torrent-drop-mask">{{ $t('addDialog.dropTorrent') }}</div>
+    <AddDialog v-model:show="showDropAddDialog" type="file" :initial-files="droppedFiles" />
 
     <!-- 移动端抽屉 -->
     <template v-if="isMobile">
@@ -62,6 +64,9 @@ import { useIsSmallScreen } from '@/composables/useIsSmallScreen'
 import { useSettingStore, useTorrentDetailStore, useTorrentStore } from '@/store'
 import { useSessionStore } from '@/store/session'
 import { useToolbarStore } from '@/store/toolbarStore'
+import AddDialog from '@/components/dialog/AddDialog.vue'
+import { useI18n } from 'vue-i18n'
+import { useMessage } from 'naive-ui'
 
 // ==================== Store 和 Router ====================
 const router = useRouter()
@@ -74,6 +79,74 @@ const toolbarStore = useToolbarStore()
 // ==================== 响应式状态 ====================
 const loading = ref(true)
 const loadingDetail = ref(false)
+const { t: $t } = useI18n()
+const message = useMessage()
+const dropActive = ref(false)
+const showDropAddDialog = ref(false)
+const droppedFiles = ref<File[]>([])
+let dropDepth = 0
+
+function getDraggedTorrentFiles(event: DragEvent): File[] {
+  return Array.from(event.dataTransfer?.files || []).filter((file) =>
+    file.name.toLowerCase().endsWith('.torrent')
+  )
+}
+
+// dragenter/dragover 阶段拿不到文件列表，只能靠 types/items 判断是不是文件拖拽；
+// 具体是否 `.torrent` 要到 drop 阶段才能确认。这里对任何文件拖拽先给出视觉反馈，
+// 拖入非种子文件时只在放下时提示，不弹出添加框。
+function isFileDrag(event: DragEvent) {
+  const transfer = event.dataTransfer
+  if (!transfer) {
+    return false
+  }
+  if (Array.from(transfer.types || []).includes('Files')) {
+    return true
+  }
+  return Array.from(transfer.items || []).some((item) => item.kind === 'file')
+}
+
+function onWindowDragEnter(event: DragEvent) {
+  if (!isFileDrag(event)) {
+    return
+  }
+  event.preventDefault()
+  dropDepth += 1
+  dropActive.value = true
+}
+
+function onWindowDragOver(event: DragEvent) {
+  if (!isFileDrag(event)) {
+    return
+  }
+  event.preventDefault()
+  if (event.dataTransfer) {
+    event.dataTransfer.dropEffect = 'copy'
+  }
+}
+
+function onWindowDragLeave() {
+  dropDepth = Math.max(0, dropDepth - 1)
+  if (dropDepth === 0) {
+    dropActive.value = false
+  }
+}
+
+function onWindowDrop(event: DragEvent) {
+  if (!isFileDrag(event)) {
+    return
+  }
+  event.preventDefault()
+  dropDepth = 0
+  dropActive.value = false
+  const files = getDraggedTorrentFiles(event)
+  if (!files.length) {
+    message.warning($t('addDialog.onlyTorrent'))
+    return
+  }
+  droppedFiles.value = files
+  showDropAddDialog.value = true
+}
 
 // 持久化状态
 const isMobile = useIsSmallScreen()
@@ -144,6 +217,10 @@ watch([pcDetailVisible, mobileDetailVisible, () => torrentStore.selectedKeys], (
 // ==================== 生命周期 ====================
 onMounted(async () => {
   loading.value = true
+  window.addEventListener('dragenter', onWindowDragEnter)
+  window.addEventListener('dragover', onWindowDragOver)
+  window.addEventListener('dragleave', onWindowDragLeave)
+  window.addEventListener('drop', onWindowDrop)
 
   // 初始化布局
   initHeight()
@@ -163,6 +240,10 @@ onMounted(async () => {
 onUnmounted(() => {
   torrentStore.stopPolling()
   cleanupListeners()
+  window.removeEventListener('dragenter', onWindowDragEnter)
+  window.removeEventListener('dragover', onWindowDragOver)
+  window.removeEventListener('dragleave', onWindowDragLeave)
+  window.removeEventListener('drop', onWindowDrop)
 })
 </script>
 
@@ -225,6 +306,21 @@ onUnmounted(() => {
   z-index: 10;
   display: flex;
   align-items: center;
+}
+
+.torrent-drop-mask {
+  position: fixed;
+  inset: 12px;
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed var(--primary-color);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--body-color, #000) 72%, transparent);
+  color: var(--primary-color);
+  font-size: 20px;
+  pointer-events: none;
 }
 
 .detail-container {
