@@ -37,10 +37,7 @@
         <div
           v-if="colIdx < visibleColumns.length"
           class="col-resizer"
-          @mousedown="onResizerMouseDown($event, col)"
-          @touchstart="onResizerTouchStart($event, col)"
-          @touchmove="onResizerTouchMove($event)"
-          @touchend="onResizerTouchEnd($event)"
+          @pointerdown="onResizerPointerDown($event, col)"
         ></div>
       </div>
     </div>
@@ -50,6 +47,7 @@
 </template>
 <script setup lang="ts">
 import { allColumns } from '@/composables/useColumns'
+import { usePointerDrag } from '@/composables/usePointerDrag'
 import { useTorrentStore } from '@/store'
 import { useToolbarStore } from '@/store/toolbarStore'
 import { CaretDown, CaretUp } from '@vicons/ionicons5'
@@ -119,99 +117,44 @@ const showColumnMenu = defineModel<boolean>('showHeaderMenu', { default: false }
 const columnMenuX = ref(0)
 const columnMenuY = ref(0)
 
-function onResizerTouchStart(e: TouchEvent, col: { key: string; width: number }) {
-  e.preventDefault()
-  e.stopPropagation()
-  if (e.touches.length !== 1) {
-    return
-  }
-  const dom = e.target as HTMLElement
-  dom.classList.add('active')
-  resizing.value = true
-  resizeColKey.value = col.key
-  startX.value = e.touches[0].clientX
-  startWidth.value = col.width
-  if (headerRef.value) {
-    headerLeft.value = headerRef.value.getBoundingClientRect().left
-  } else {
-    headerLeft.value = 0
-  }
-  resizeLineX.value = e.touches[0].clientX - headerLeft.value
-  document.body.style.cursor = 'col-resize'
-}
+let currentCol: { key: string; width: number } | null = null
 
-function onResizerTouchMove(e: TouchEvent) {
-  if (!resizing.value || e.touches.length !== 1) {
-    return
+const { onPointerDown: onResizerPointerDownInternal } = usePointerDrag({
+  onStart(event) {
+    event.preventDefault()
+    event.stopPropagation()
+    const col = currentCol
+    if (!col) {
+      return
+    }
+    resizing.value = true
+    resizeColKey.value = col.key
+    startX.value = event.clientX
+    startWidth.value = col.width
+    headerLeft.value = headerRef.value?.getBoundingClientRect().left || 0
+    resizeLineX.value = event.clientX - headerLeft.value
+    document.body.style.cursor = 'col-resize'
+  },
+  onMove(event) {
+    if (!resizing.value) {
+      return
+    }
+    resizeLineX.value = event.clientX - headerLeft.value
+    const newWidth = Math.max(getMinWidth(resizeColKey.value), startWidth.value + event.clientX - startX.value)
+    if (resizeColKey.value) {
+      torrentStore.updateColumnWidth(resizeColKey.value, newWidth)
+    }
+  },
+  onEnd() {
+    resizing.value = false
+    resizeColKey.value = null
+    document.body.style.cursor = ''
   }
-  resizeLineX.value = e.touches[0].clientX - headerLeft.value
-  const touch = e.changedTouches[0]
-  const delta = touch.clientX - startX.value
-  const newWidth = Math.max(getMinWidth(resizeColKey.value), startWidth.value + delta)
-  if (resizeColKey.value) {
-    torrentStore.updateColumnWidth(resizeColKey.value, newWidth)
-  }
-}
+})
 
-function onResizerTouchEnd(e: TouchEvent) {
-  if (!resizing.value) {
-    return
-  }
-  const dom = e.target as HTMLElement
-  dom.classList.remove('active')
-  const touch = e.changedTouches[0]
-  const delta = touch.clientX - startX.value
-  const newWidth = Math.max(getMinWidth(resizeColKey.value), startWidth.value + delta)
-  if (resizeColKey.value) {
-    torrentStore.updateColumnWidth(resizeColKey.value, newWidth)
-  }
-  resizing.value = false
-  resizeColKey.value = null
-  document.body.style.cursor = ''
-}
-
-function onResizerMouseDown(e: MouseEvent, col: { key: string; width: number }) {
-  resizing.value = true
-  resizeColKey.value = col.key
-  startX.value = e.clientX
-  startWidth.value = col.width
-  if (headerRef.value) {
-    headerLeft.value = headerRef.value.getBoundingClientRect().left
-  } else {
-    headerLeft.value = 0
-  }
-  resizeLineX.value = e.clientX - headerLeft.value
-  document.body.style.cursor = 'col-resize'
-  window.addEventListener('mousemove', onResizerMouseMove)
-  window.addEventListener('mouseup', onResizerMouseUp)
-}
-
-function onResizerMouseMove(e: MouseEvent) {
-  if (!resizing.value) {
-    return
-  }
-  resizeLineX.value = e.clientX - headerLeft.value
-  const delta = e.clientX - startX.value
-  const newWidth = Math.max(getMinWidth(resizeColKey.value), startWidth.value + delta)
-  if (resizeColKey.value) {
-    torrentStore.updateColumnWidth(resizeColKey.value, newWidth)
-  }
-}
-
-function onResizerMouseUp(e: MouseEvent) {
-  if (!resizing.value) {
-    return
-  }
-  const delta = e.clientX - startX.value
-  const newWidth = Math.max(getMinWidth(resizeColKey.value), startWidth.value + delta)
-  if (resizeColKey.value) {
-    torrentStore.updateColumnWidth(resizeColKey.value, newWidth)
-  }
-  resizing.value = false
-  resizeColKey.value = null
-  document.body.style.cursor = ''
-  window.removeEventListener('mousemove', onResizerMouseMove)
-  window.removeEventListener('mouseup', onResizerMouseUp)
+function onResizerPointerDown(e: PointerEvent, col: { key: string; width: number }) {
+  currentCol = col
+  onResizerPointerDownInternal(e)
 }
 
 function onTableHeaderContextMenu(e: MouseEvent) {
@@ -300,6 +243,7 @@ function onCheckboxChange(checked: boolean) {
   width: 8px;
   height: 100%;
   cursor: col-resize;
+  touch-action: none;
   z-index: 2;
   background: transparent;
   transition: background 0.2s;

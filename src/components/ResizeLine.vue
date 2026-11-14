@@ -1,8 +1,7 @@
 <template>
   <div
     class="resizer-line"
-    @mousedown="onResizeMouseDown"
-    @touchstart="onResizeTouchStart"
+    @pointerdown="onResizePointerDown"
     :style="{ width: lineWidth + 'px' }"
   ></div>
 </template>
@@ -21,7 +20,7 @@ const props = withDefaults(
   }
 )
 const containerWidth = defineModel<number>('containerWidth', { required: true })
-const { onResizeMouseDown, onResizeTouchStart } = useResize(
+const { onResizePointerDown } = useResize(
   containerWidth,
   props.minContainerWidth,
   props.maxContainerWidth
@@ -32,6 +31,7 @@ const { onResizeMouseDown, onResizeTouchStart } = useResize(
 .resizer-line {
   width: 6px;
   cursor: ew-resize;
+  touch-action: none;
   background-color: var(--border-color);
   transition: background 0.2s;
   height: 100%;
