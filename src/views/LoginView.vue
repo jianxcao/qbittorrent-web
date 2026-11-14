@@ -9,12 +9,26 @@
             <n-input v-model:value="loginForm.domain" :placeholder="$t('login.serverUrlPlaceholder')" clearable />
           </n-form-item>
 
-          <n-form-item path="username" :label="$t('login.username')">
-            <n-input v-model:value="loginForm.username" :placeholder="$t('login.usernamePlaceholder')" clearable />
+          <n-form-item>
+            <n-radio-group v-model:value="loginForm.authMode" name="authMode">
+              <n-radio-button value="password">{{ $t('login.passwordMode') }}</n-radio-button>
+              <n-radio-button value="apiKey">{{ $t('login.apiKeyMode') }}</n-radio-button>
+            </n-radio-group>
           </n-form-item>
 
-          <n-form-item path="password" :label="$t('login.password')">
-            <n-input v-model:value="loginForm.password" type="password" :placeholder="$t('login.passwordPlaceholder')"
+          <template v-if="loginForm.authMode === 'password'">
+            <n-form-item path="username" :label="$t('login.username')">
+              <n-input v-model:value="loginForm.username" :placeholder="$t('login.usernamePlaceholder')" clearable />
+            </n-form-item>
+
+            <n-form-item path="password" :label="$t('login.password')">
+              <n-input v-model:value="loginForm.password" type="password" :placeholder="$t('login.passwordPlaceholder')"
+                show-password-on="click" @keyup.enter="onLogin" />
+            </n-form-item>
+          </template>
+
+          <n-form-item v-else path="apiKey" :label="$t('login.apiKey')">
+            <n-input v-model:value="loginForm.apiKey" type="password" :placeholder="$t('login.apiKeyPlaceholder')"
               show-password-on="click" @keyup.enter="onLogin" />
           </n-form-item>
           <!--
@@ -51,8 +65,10 @@ const { t: $t } = useI18n()
 
 interface LoginForm {
   domain: string
+  authMode: 'password' | 'apiKey'
   username: string
   password: string
+  apiKey: string
 }
 
 const formRef = ref<FormInst | null>(null)
@@ -62,8 +78,10 @@ const message = useMessage()
 
 const loginForm = ref<LoginForm>({
   domain: settingStore.setting.domain,
+  authMode: settingStore.setting.apiKey ? 'apiKey' : 'password',
   username: '',
   password: '',
+  apiKey: settingStore.setting.apiKey || ''
 })
 
 // 表单验证规则
@@ -81,52 +99,52 @@ const rules: FormRules = {
   username: [
     {
       required: true,
-      trigger: ['input', 'blur']
-    },
-    {
-      min: 2,
-      trigger: ['input', 'blur']
+      trigger: ['input', 'blur'],
+      validator: (_rule, value: string) => loginForm.value.authMode !== 'password' || value.length >= 2
     }
   ],
   password: [
     {
       required: true,
-      trigger: ['input', 'blur']
-    },
+      trigger: ['input', 'blur'],
+      validator: (_rule, value: string) => loginForm.value.authMode !== 'password' || !!value
+    }
+  ],
+  apiKey: [
     {
-      min: 1,
-      trigger: ['input', 'blur']
+      required: true,
+      trigger: ['input', 'blur'],
+      validator: (_rule, value: string) => loginForm.value.authMode !== 'apiKey' || !!value?.trim()
     }
   ]
 }
 
 const onLogin = async () => {
   try {
-    console.debug('loginForm', loginForm.value)
-    // 先进行表单验证
     await formRef.value?.validate()
 
     loading.value = true
-
-    // 设置 qBittorrent 服务器地址
     settingStore.setDomain(loginForm.value.domain)
 
-    // 调用 qBittorrent 登录 API
-    const loginSuccess = await sessionStore.login(loginForm.value.username, loginForm.value.password)
+    const loginSuccess = loginForm.value.authMode === 'apiKey'
+      ? await sessionStore.loginWithApiKey(loginForm.value.apiKey)
+      : await sessionStore.login(loginForm.value.username, loginForm.value.password)
 
     if (loginSuccess) {
-      // 保存认证信息到设置中（如果用户选择记住密码）
+      if (loginForm.value.authMode === 'apiKey') {
+        settingStore.setApiKeyValue(loginForm.value.apiKey)
+      } else {
+        settingStore.setApiKeyValue('')
+      }
       message.success($t('login.loginSuccess'))
       router.push('/')
     } else {
-      message.error($t('login.invalidCredentials'))
+      message.error(loginForm.value.authMode === 'apiKey' ? $t('login.invalidApiKey') : $t('login.invalidCredentials'))
     }
   } catch (validationErrors) {
-    // 如果是表单验证错误，不需要特殊处理，naive-ui 会自动显示错误信息
     if (Array.isArray(validationErrors)) {
       return
     }
-    // 处理登录接口错误
     message.error($t('login.loginFailed'))
   } finally {
     loading.value = false

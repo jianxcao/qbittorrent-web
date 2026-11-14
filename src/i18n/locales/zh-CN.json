@@ -61,13 +61,18 @@
     "username": "用户名",
     "password": "密码",
     "rememberPassword": "记住密码",
+    "passwordMode": "账号密码",
+    "apiKeyMode": "API Key",
+    "apiKey": "API Key",
     "loginButton": "登录",
     "serverUrlPlaceholder": "http://localhost:8080",
     "usernamePlaceholder": "请输入用户名",
     "passwordPlaceholder": "请输入密码",
+    "apiKeyPlaceholder": "qBittorrent 5.2+ 的 WebUI API Key",
     "loginSuccess": "登录成功",
     "loginFailed": "登录失败，请检查服务端或网络",
-    "invalidCredentials": "用户名或密码错误"
+    "invalidCredentials": "用户名或密码错误",
+    "invalidApiKey": "API Key 无效，或服务端不支持 API Key 登录"
   },
   "addDialog": {
     "title": "添加种子",

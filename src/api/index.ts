@@ -5,7 +5,7 @@
  */
 
 // 导出 HTTP 客户端和工具函数
-export { httpClient, setDomain, toFormData, toUrlEncoded, hashesToParam } from './http'
+export { httpClient, setDomain, setApiKey, toFormData, toUrlEncoded, hashesToParam } from './http'
 
 // 导出类型定义
 export * from './types'

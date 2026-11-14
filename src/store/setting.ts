@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { useStorage } from '@vueuse/core'
 import { useThemeVars, type CustomThemeCommonVars, type ThemeCommonVars } from 'naive-ui'
 import { setLocale } from '@/i18n'
+import { setApiKey, setDomain as applyHttpDomain } from '@/api/http'
 import * as applicationApi from '@/api/modules/application'
 import * as transferApi from '@/api/modules/transfer'
 import type { AppPreferences } from '@/api/types'
@@ -42,6 +43,7 @@ export const useSettingStore = defineStore('setting', () => {
       language: 'zh-CN',
       defaultTrackers: DEFAULT_TRACKERS,
       domain: window.location.origin,
+      apiKey: '',
       singleLine: true,
       polling: {
         torrentDetailInterval: 3,
@@ -69,9 +71,16 @@ export const useSettingStore = defineStore('setting', () => {
 
   function setDomain(val: string) {
     setting.value.domain = val
+    applyHttpDomain(val)
+  }
+
+  function setApiKeyValue(val: string) {
+    setting.value.apiKey = val.trim()
+    setApiKey(setting.value.apiKey)
   }
 
   setDomain(setting.value.domain)
+  setApiKey(setting.value.apiKey || '')
 
   // 初始化语言设置
   watchEffect(() => {
@@ -186,6 +195,7 @@ export const useSettingStore = defineStore('setting', () => {
     lineHeightMini,
     serverHost,
     setDomain,
+    setApiKeyValue,
     setPolling,
     sidebarWidth,
     detailHeight,

@@ -3,6 +3,8 @@ import axios from 'axios'
 
 // qBittorrent API 配置
 let domain = ''
+// qBittorrent >= 5.2 API Key，无 cookie 鉴权
+let apiKey = ''
 
 export const setDomain = (d: string) => {
   if (!d) {
@@ -10,6 +12,10 @@ export const setDomain = (d: string) => {
   }
   domain = d
   httpClient.defaults.baseURL = getBaseURL()
+}
+
+export const setApiKey = (key: string) => {
+  apiKey = key.trim()
 }
 
 const getBaseURL = () => {
@@ -31,8 +37,11 @@ export const httpClient: AxiosInstance = axios.create({
 
 // 请求拦截器
 httpClient.interceptors.request.use((config) => {
-  // 移除 Referer 设置，浏览器会自动处理
-  // config.headers['Referer'] = window.location.origin
+  if (apiKey) {
+    config.headers.set('Authorization', `Bearer ${apiKey}`)
+  } else {
+    config.headers.delete('Authorization')
+  }
   return config
 })
 
@@ -42,14 +51,13 @@ httpClient.interceptors.response.use(
     return res
   },
   async (error) => {
-    const { response } = error
-    // 可以在这里处理全局错误，如 403 跳转到登录页
-    if (response?.status === 403) {
-      console.error('403', response, window.router.currentRoute.value.path)
-      // 跳转到登录页
-      if (window.router.currentRoute.value.path !== '/login') {
-        window.router.push('/login')
-      }
+    const { response, config } = error
+    const requestUrl = config?.url || ''
+    const onLoginPage = window.router.currentRoute.value.path === '/login'
+    // 登录接口失败和登录页上的探测请求不跳转，避免打断表单错误提示
+    if ((response?.status === 401 || response?.status === 403) && !requestUrl.includes('/auth/login') && !onLoginPage) {
+      console.error(response.status, response, window.router.currentRoute.value.path)
+      window.router.push('/login')
     }
     return Promise.reject(error)
   }

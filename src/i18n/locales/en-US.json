@@ -61,13 +61,18 @@
     "username": "Username",
     "password": "Password",
     "rememberPassword": "Remember Password",
+    "passwordMode": "Password",
+    "apiKeyMode": "API Key",
+    "apiKey": "API Key",
     "loginButton": "Login",
     "serverUrlPlaceholder": "http://localhost:8080",
     "usernamePlaceholder": "Enter username",
     "passwordPlaceholder": "Enter password",
+    "apiKeyPlaceholder": "WebUI API Key from qBittorrent 5.2+",
     "loginSuccess": "Login successful",
     "loginFailed": "Login failed, please check server or network",
-    "invalidCredentials": "Invalid username or password"
+    "invalidCredentials": "Invalid username or password",
+    "invalidApiKey": "Invalid API Key, or the server does not support API Key login"
   },
   "addDialog": {
     "title": "Add Torrent",
