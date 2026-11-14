@@ -133,3 +133,13 @@ export async function rotateAPIKey(): Promise<{ apiKey: string }> {
 export async function deleteAPIKey(): Promise<void> {
   await post('/app/deleteAPIKey')
 }
+
+/**
+ * 查询某个路径所在磁盘的剩余空间
+ * POST /app/getFreeSpaceAtPath
+ * @requires qBittorrent v5.3+ (WebAPI v2.15.2+)
+ * 路径还不存在时，服务端会用最近的已存在父目录；无法判断时返回 -1
+ */
+export async function getFreeSpaceAtPath(path: string): Promise<number> {
+  return post<number>('/app/getFreeSpaceAtPath', { path })
+}

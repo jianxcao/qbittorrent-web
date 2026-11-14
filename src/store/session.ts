@@ -1,16 +1,22 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import type { BuildInfo } from '@/api'
-import { getBuildInfo, getVersion } from '@/api/modules/application'
+import { getBuildInfo, getVersion, getWebApiVersion } from '@/api/modules/application'
 import { setApiKey } from '@/api/http'
 import { login as loginApi, logout as logoutApi } from '@/api/modules/auth'
 import { useSettingStore } from '@/store/setting'
 
 export const useSessionStore = defineStore('session', () => {
   const version = ref<string | null>(null)
+  const webApiVersion = ref<string | null>(null)
   const fetchVersion = async () => {
     const res = await getVersion()
     version.value = res
+    try {
+      webApiVersion.value = await getWebApiVersion()
+    } catch (error) {
+      console.error('Failed to fetch WebAPI version:', error)
+    }
   }
   const buildInfo = ref<BuildInfo | null>(null)
   const fetchBuildInfo = async () => {
@@ -54,5 +60,5 @@ export const useSessionStore = defineStore('session', () => {
     return false
   }
 
-  return { version, fetchVersion, buildInfo, fetchBuildInfo, login, loginWithApiKey, logout }
+  return { version, webApiVersion, fetchVersion, buildInfo, fetchBuildInfo, login, loginWithApiKey, logout }
 })

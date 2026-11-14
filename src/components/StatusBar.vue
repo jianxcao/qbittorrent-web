@@ -52,7 +52,8 @@
 <script setup lang="ts">
 import AboutDialog from '@/components/dialog/AboutDialog.vue'
 import { useSessionStore, useSettingStore, useTorrentStore } from '@/store'
-import { formatSize, formatSpeed } from '@/utils'
+import { getFreeSpaceAtPath } from '@/api/modules/application'
+import { formatSize, formatSpeed, compareVersion } from '@/utils'
 import {
   InformationCircle as InfoIcon,
   Moon as MoonIcon,
@@ -89,6 +90,91 @@ const selectedSize = computed(() => {
 
 const serverHost = computed(() => settingStore.serverHost)
 
+// 4.x 的 sync 带默认保存路径剩余空间。5.0–5.2 这个字段固定为 -1，且没有替代接口。
+// 5.3 / WebAPI 2.15.2 起改为 POST /app/getFreeSpaceAtPath。
+const FREE_SPACE_API_VERSION = '2.15.2'
+const FREE_SPACE_REMOVED_API_VERSION = '2.11.0'
+const FREE_SPACE_REMOVED_APP_VERSION = '5.0.0'
+const FREE_SPACE_PATH_APP_VERSION = '5.3.0'
+const pathFreeSpace = ref<number | null>(null)
+
+const supportsPathFreeSpace = computed(() => {
+  const apiVersion = sessionStore.webApiVersion
+  return !!apiVersion && compareVersion(apiVersion, FREE_SPACE_API_VERSION) >= 0
+})
+
+// free_space_on_disk 被移除（-1）但还没有 getFreeSpaceAtPath 的版本区间。
+// 优先用 WebAPI 版本判断；拿不到时回退到应用版本，避免显示成「未知」。
+const isDiskSpaceUnsupported = computed(() => {
+  const apiVersion = sessionStore.webApiVersion
+  if (apiVersion) {
+    return (
+      compareVersion(apiVersion, FREE_SPACE_REMOVED_API_VERSION) >= 0 &&
+      compareVersion(apiVersion, FREE_SPACE_API_VERSION) < 0
+    )
+  }
+  const appVersion = sessionStore.version
+  if (appVersion) {
+    return (
+      compareVersion(appVersion, FREE_SPACE_REMOVED_APP_VERSION) >= 0 &&
+      compareVersion(appVersion, FREE_SPACE_PATH_APP_VERSION) < 0
+    )
+  }
+  return false
+})
+
+async function refreshPathFreeSpace() {
+  if (!supportsPathFreeSpace.value) {
+    pathFreeSpace.value = null
+    return
+  }
+  const path = settingStore.preferences.save_path
+  if (!path) {
+    pathFreeSpace.value = null
+    return
+  }
+  try {
+    pathFreeSpace.value = await getFreeSpaceAtPath(path)
+  } catch (error) {
+    console.error('Failed to fetch free disk space:', error)
+    pathFreeSpace.value = null
+  }
+}
+
+watch(
+  [supportsPathFreeSpace, () => settingStore.preferences.save_path],
+  () => {
+    refreshPathFreeSpace()
+  },
+  { immediate: true }
+)
+
+// 与种子列表轮询同频，避免加载后剩余空间一直不更新。
+const freeSpaceInterval = computed(() => settingStore.setting.polling.torrentInterval * 1000)
+const { resume: startFreeSpacePolling, pause: stopFreeSpacePolling } = useIntervalFn(refreshPathFreeSpace, freeSpaceInterval, {
+  immediate: false
+})
+
+const diskSpaceText = computed(() => {
+  if (supportsPathFreeSpace.value) {
+    if (pathFreeSpace.value == null) {
+      return $t('statusBar.unknown')
+    }
+    if (pathFreeSpace.value < 0) {
+      return $t('statusBar.unknown')
+    }
+    return formatSize(pathFreeSpace.value)
+  }
+  const legacy = Number(serverState.value.free_space_on_disk)
+  if (Number.isFinite(legacy) && legacy >= 0) {
+    return formatSize(legacy)
+  }
+  if (isDiskSpaceUnsupported.value) {
+    return $t('statusBar.diskUnsupported')
+  }
+  return $t('statusBar.unknown')
+})
+
 // 主题切换（naive-ui）
 const isDark = computed(() => settingStore.setting.theme === 'dark')
 function onToggleTheme() {
@@ -122,6 +208,11 @@ async function onToggleSpeedLimit() {
 // 组件挂载时获取当前限速模式
 onMounted(() => {
   settingStore.fetchSpeedLimitMode()
+  startFreeSpacePolling()
+})
+
+onUnmounted(() => {
+  stopFreeSpacePolling()
 })
 
 // tag 数据
@@ -144,10 +235,7 @@ const allTags = computed(() => [
   },
   {
     text: $t('statusBar.diskSize', {
-      size:
-        Number(serverState.value.free_space_on_disk) < 0
-          ? $t('statusBar.unknown')
-          : formatSize(serverState.value.free_space_on_disk)
+      size: diskSpaceText.value
     }),
     type: 'info' as const
   },

@@ -245,7 +245,8 @@
     "alternativeSpeedMode": "Alternative Speed",
     "toggleSpeedLimitFailed": "Failed to toggle speed limit mode",
     "diskSize": "Disk Size: {size}",
-    "unknown": "Unknown"
+    "unknown": "Unknown",
+    "diskUnsupported": "Unsupported on this version"
   },
   "message": {
     "taskStarted": "Tasks started",
