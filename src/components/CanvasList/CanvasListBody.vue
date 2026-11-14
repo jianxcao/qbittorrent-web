@@ -318,7 +318,6 @@ function renderVisibleRows() {
   // 清空现有内容
   scrollGroup.clear()
   stickyGroup?.clear()
-  getCellRenderer('tags').begin?.()
 
   const { startIndex, endIndex } = visibleRange.value
   const torrents = torrentStore.filterTorrents

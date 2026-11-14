@@ -21,7 +21,6 @@ export interface CellRenderContext {
  * 单元格渲染器接口
  */
 export interface CellRenderer {
-  begin?(): void
   render(ctx: CellRenderContext, leaferGroup: Group): void
 }
 
