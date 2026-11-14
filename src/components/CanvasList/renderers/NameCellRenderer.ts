@@ -1,5 +1,5 @@
 import type { CellRenderer, CellRenderContext } from '../types'
-import { Text, Image } from 'leafer-ui'
+import { Text, Image, Rect } from 'leafer-ui'
 import { Group } from 'leafer-ui'
 import { qbStateIconMap, qbStatusFilters } from '@/const/status'
 import type { QBTorrentState, Torrent } from '@/api/types'
@@ -17,6 +17,8 @@ import dismissSquareSvg from '@/assets/icons/dismissSquare.svg?raw' // 错误
 import swapVerticalSvg from '@/assets/icons/swapVertical.svg?raw' // 移动
 import alertCircleSvg from '@/assets/icons/alertCircle.svg?raw' // 未知
 import { FONT_FAMILY } from '../constant'
+import { measureTextWidth } from '@/utils'
+import { tagColor } from '@/utils/tagColor'
 
 /**
  * 将 SVG 字符串转换为带颜色的 Data URL
@@ -145,9 +147,30 @@ export class NameCellRenderer implements CellRenderer {
     // 计算文本颜色（根据选中状态）
     const textColor = isSelected ? theme.textColor1 : theme.textColor2
 
-    // 计算文本位置（图标之后）
-    const textX = x + iconMargin + iconSize + iconSpacing
-    const textWidth = width - iconMargin - iconSize - iconSpacing - 12 // 右边距12
+    const tags = ((row.tagsArray || []) as string[]).filter(Boolean)
+    const tagFontSize = 11
+    const tagHeight = 18
+    const tagGap = 4
+    const tagPadX = 6
+    const rightMargin = 12
+    let tagsWidth = 0
+    const visibleTags: { name: string; width: number }[] = []
+    const contentRight = x + width - rightMargin
+    const nameStart = x + iconMargin + iconSize + iconSpacing
+    const minNameWidth = 48
+    for (const name of tags) {
+      const pillWidth = Math.ceil(measureTextWidth(name, tagFontSize)) + tagPadX * 2
+      const next = tagsWidth + (visibleTags.length ? tagGap : 0) + pillWidth
+      if (nameStart + minNameWidth + next > contentRight) {
+        break
+      }
+      visibleTags.push({ name, width: pillWidth })
+      tagsWidth = next
+    }
+
+    // 计算文本位置（图标之后，标签之前）
+    const textX = nameStart
+    const textWidth = Math.max(0, width - iconMargin - iconSize - iconSpacing - rightMargin - (tagsWidth ? tagsWidth + 8 : 0))
 
     // 创建文本元素
     const textElement = new Text({
@@ -168,5 +191,38 @@ export class NameCellRenderer implements CellRenderer {
     } as any)
 
     leaferGroup.add(textElement)
+
+    let tagX = textX + textWidth + (tagsWidth ? 8 : 0)
+    const tagY = y + (height - tagHeight) / 2
+    for (const tag of visibleTags) {
+      const color = tagColor(tag.name)
+      leaferGroup.add(
+        new Rect({
+          x: tagX,
+          y: tagY,
+          width: tag.width,
+          height: tagHeight,
+          cornerRadius: tagHeight / 2,
+          fill: color.background,
+          stroke: color.border,
+          strokeWidth: 1
+        })
+      )
+      leaferGroup.add(
+        new Text({
+          text: tag.name,
+          x: tagX,
+          y: tagY,
+          width: tag.width,
+          height: tagHeight,
+          fill: color.text,
+          fontSize: tagFontSize,
+          textAlign: 'center',
+          verticalAlign: 'middle',
+          fontFamily: FONT_FAMILY
+        } as any)
+      )
+      tagX += tag.width + tagGap
+    }
   }
 }

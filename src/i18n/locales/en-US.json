@@ -394,7 +394,8 @@
       "noData": "No data available",
       "progress": "Download Progress",
       "completed": "Completed",
-      "pieces": "Pieces"
+      "pieces": "Pieces",
+      "tags": "Tags"
     },
     "transfer": {
       "title": "Transfer",

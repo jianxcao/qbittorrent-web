@@ -394,7 +394,8 @@
       "noData": "暂无数据",
       "progress": "下载进度",
       "completed": "已完成",
-      "pieces": "区块"
+      "pieces": "区块",
+      "tags": "标签"
     },
     "transfer": {
       "title": "传输",
