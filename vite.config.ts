@@ -131,7 +131,9 @@ export default defineConfig(({ mode }) => {
           cleanupOutdatedCaches: true
         },
         devOptions: {
-          enabled: true
+          // 关闭开发模式 SW，避免 localhost 遗留的 dev SW 在后续 preview/生产构建中
+          // 被误认为「已有 controller」，从而触发更新弹窗误报。
+          enabled: false
         }
       })
     ],
