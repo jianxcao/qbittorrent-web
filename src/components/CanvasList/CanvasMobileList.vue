@@ -316,20 +316,28 @@ function renderVisibleCards() {
   }
 }
 
-// 监听数据变化，触发重绘
+// 数据变化触发全量重建（不监听 visibleRange，也不使用 deep）
 watch(
   () => [
     torrentStore.filterTorrents,
     torrentStore.selectedKeys,
     settingStore.themeVars,
-    visibleRange.value,
     hoverRowIndex.value,
     toolbarStore.selectMode
   ],
   () => {
     scheduleRender()
-  },
-  { deep: true }
+  }
+)
+
+// 仅当可见索引区间或容器高度变化时才重建，普通滚动只平移 contentGroup
+watch(
+  () => [visibleRange.value.startIndex, visibleRange.value.endIndex, props.listHeight],
+  (newVal, oldVal) => {
+    if (newVal[0] !== oldVal[0] || newVal[1] !== oldVal[1] || newVal[2] !== oldVal[2]) {
+      scheduleRender()
+    }
+  }
 )
 
 watch(

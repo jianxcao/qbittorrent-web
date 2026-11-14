@@ -106,20 +106,39 @@ function cancelScheduledRender() {
   }
 }
 
+// 数据变化触发全量重建。
+// 注意：这里不监听 visibleRange，也不使用 deep。
+// 数组引用在每次轮询/选中变化时都会重新生成，浅比较即可，
+// deep 会对上千个 torrent 做深度遍历，代价高昂。
+// hover 单独用增量更新处理（见下方 watch），不触发全量重建。
 watch(
   () => [
     torrentStore.filterTorrents,
     torrentStore.selectedKeys,
     torrentStore.visibleColumns,
     settingStore.themeVars,
-    visibleRange.value,
-    hoverRowIndex.value,
     toolbarStore.selectMode
   ],
   () => {
     scheduleRender()
-  },
-  { deep: true }
+  }
+)
+
+// hover 变化只更新受影响行的背景色，避免鼠标移动时清空重建所有可见行
+watch(hoverRowIndex, (next, prev) => {
+  updateHoverBackground(prev, next)
+})
+
+// 仅当可见行索引区间（或容器高度）真正变化时才重建。
+// 普通滚动（scrollTop 变化但 start/end 不变）只由下方 watch 平移 group，不重建节点，
+// 避免「每次滚动 1px 都清空并重建所有可见行」。
+watch(
+  () => [visibleRange.value.startIndex, visibleRange.value.endIndex, props.listHeight],
+  (newVal, oldVal) => {
+    if (newVal[0] !== oldVal[0] || newVal[1] !== oldVal[1] || newVal[2] !== oldVal[2]) {
+      scheduleRender()
+    }
+  }
 )
 
 const tableColors = computed(() => {
@@ -192,7 +211,7 @@ function renderStickyRowGroup(params: {
   theme: any
 }) {
   if (!stickyGroup) {
-    return
+    return null
   }
 
   const { rowIndex, rowY, torrent, isSelected, bgColor, theme } = params
@@ -246,6 +265,8 @@ function renderStickyRowGroup(params: {
 
   attachRowEvents(rowGroup, rowIndex, true)
   stickyGroup.add(rowGroup)
+  // 返回背景 rect，供 hover 增量更新使用（sticky 背景是第 2 个子节点）
+  return stickyBg
 }
 
 function renderRowGroup(params: {
@@ -306,8 +327,14 @@ function renderRowGroup(params: {
   }
 
   attachRowEvents(rowGroup, rowIndex)
-  return rowGroup
+  // 返回背景 rect 和行 group，供 hover 增量更新使用
+  return { group: rowGroup, bgRect: rowBg }
 }
+
+// 记录每行的背景 rect（key 为行索引），用于 hover 增量更新，避免全量重建
+// scroll 区域和 sticky 区域分别记录
+const scrollBgRects = new Map<number, any>()
+const stickyBgRects = new Map<number, any>()
 
 // 渲染可见行
 function renderVisibleRows() {
@@ -318,12 +345,19 @@ function renderVisibleRows() {
   // 清空现有内容
   scrollGroup.clear()
   stickyGroup?.clear()
+  scrollBgRects.clear()
+  stickyBgRects.clear()
 
   const { startIndex, endIndex } = visibleRange.value
   const torrents = torrentStore.filterTorrents
   const columns = torrentStore.visibleColumns
   const theme = settingStore.themeVars
   const selectedKeysSet = new Set(torrentStore.selectedKeys)
+  const selectMode = toolbarStore.selectMode
+
+  // 与行无关，移出循环只计算一次
+  const rowTotalWidth = selectMode ? torrentStore.tableMinWidth + CHECKBOX_WIDTH : torrentStore.tableMinWidth
+  const scrollRowWidth = rowTotalWidth - CHECKBOX_WIDTH
 
   // 渲染每一行
   for (let i = startIndex; i <= endIndex; i++) {
@@ -340,14 +374,9 @@ function renderVisibleRows() {
     const isEven = i % 2 === 0
     const { scrollBgColor, stickyBgColor } = getRowBgColors({ isSelected, isHover, isEven, theme })
 
-    // 计算行总宽度（包含 checkbox 列）
-    const rowTotalWidth = toolbarStore.selectMode
-      ? torrentStore.tableMinWidth + CHECKBOX_WIDTH
-      : torrentStore.tableMinWidth
-
     // 选择模式开启：checkbox 首列需要“固定”，因此拆分为 stickyGroup + scrollGroup 两层渲染
-    if (toolbarStore.selectMode) {
-      renderStickyRowGroup({
+    if (selectMode) {
+      const stickyBg = renderStickyRowGroup({
         rowIndex: i,
         rowY,
         torrent,
@@ -356,18 +385,24 @@ function renderVisibleRows() {
         theme
       })
 
-      const scrollRowGroup = renderRowGroup({
+      const scrollRow = renderRowGroup({
         rowIndex: i,
         rowY,
         xStart: CHECKBOX_WIDTH,
-        width: rowTotalWidth - CHECKBOX_WIDTH,
+        width: scrollRowWidth,
         torrent,
         columns,
         isSelected,
         bgColor: scrollBgColor,
         theme
       })
-      scrollGroup.add(scrollRowGroup)
+      scrollGroup.add(scrollRow.group)
+      if (scrollRow.bgRect) {
+        scrollBgRects.set(i, scrollRow.bgRect)
+      }
+      if (stickyBg) {
+        stickyBgRects.set(i, stickyBg)
+      }
     } else {
       // 非选择模式：直接渲染为单层（随 scrollLeft 平移）
       const rowGroup = renderRowGroup({
@@ -381,7 +416,49 @@ function renderVisibleRows() {
         bgColor: scrollBgColor,
         theme
       })
-      scrollGroup.add(rowGroup)
+      scrollGroup.add(rowGroup.group)
+      if (rowGroup.bgRect) {
+        scrollBgRects.set(i, rowGroup.bgRect)
+      }
+    }
+  }
+}
+
+// 仅更新 hover 行的背景色，不重建节点
+function updateHoverBackground(prevRowIndex: number | null, nextRowIndex: number | null) {
+  const theme = settingStore.themeVars
+  const torrents = torrentStore.filterTorrents
+
+  const applyBg = (rowIndex: number | null) => {
+    if (rowIndex === null || rowIndex < 0 || rowIndex >= torrents.length) {
+      return
+    }
+    const torrent = torrents[rowIndex]
+    const isSelected = torrentStore.selectedKeys.includes(torrent.hash)
+    const isEven = rowIndex % 2 === 0
+    const { scrollBgColor, stickyBgColor } = getRowBgColors({
+      isSelected,
+      isHover: rowIndex === nextRowIndex,
+      isEven,
+      theme
+    })
+
+    const scrollRect = scrollBgRects.get(rowIndex)
+    if (scrollRect) {
+      scrollRect.fill = scrollBgColor
+    }
+    const stickyRect = stickyBgRects.get(rowIndex)
+    if (stickyRect) {
+      stickyRect.fill = stickyBgColor
+    }
+  }
+
+  if (prevRowIndex !== nextRowIndex) {
+    if (prevRowIndex !== null) {
+      applyBg(prevRowIndex)
+    }
+    if (nextRowIndex !== null) {
+      applyBg(nextRowIndex)
     }
   }
 }

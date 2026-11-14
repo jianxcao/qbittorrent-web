@@ -40,10 +40,13 @@ function tagLayout(name: string): TagLayout {
 export class TagsCellRenderer implements CellRenderer {
   render(ctx: CellRenderContext, leaferGroup: LeaferGroup): void {
     const { row, x, y, width, height } = ctx
-    const tags = String(row.tags || '')
-      .split(',')
-      .map((tag) => tag.trim())
-      .filter(Boolean)
+    // 优先使用 store 预处理好的 tagsArray，避免每次渲染都 split 字符串
+    const tags: string[] = Array.isArray((row as any).tagsArray)
+      ? (row as any).tagsArray
+      : String(row.tags || '')
+          .split(',')
+          .map((tag) => tag.trim())
+          .filter(Boolean)
     if (!tags.length) {
       return
     }
