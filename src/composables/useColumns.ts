@@ -106,8 +106,16 @@ export function useColumns(storageKey = 'torrent-columns') {
       }
     })
 
-  // 合并：保持已有列的顺序，新列添加到末尾
+  // 合并：保持已有列的顺序，新列添加到末尾。
   columns.value = [...validExistingColumns, ...newColumns]
+
+  // 一次性迁移：标签列之前默认隐藏，第一次升级时补成可见，彩色胶囊才会出现。
+  // 迁移完成后尊重用户的隐藏选择，不再每次初始化都强制显示。
+  const TAGS_MIGRATION_KEY = 'tags-column-visible-migrated'
+  if (!localStorage.getItem(TAGS_MIGRATION_KEY)) {
+    columns.value = columns.value.map((col) => (col.key === 'tags' ? { ...col, visible: true } : col))
+    localStorage.setItem(TAGS_MIGRATION_KEY, '1')
+  }
 
   // name 列默认显示
   function setVisibleColumns(cols: ColumnConfig[]) {

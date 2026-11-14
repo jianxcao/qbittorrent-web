@@ -12,6 +12,7 @@ import { PopularityCellRenderer } from './PopularityCellRenderer'
 import { AvailabilityCellRenderer } from './AvailabilityCellRenderer'
 import { PeerCountCellRenderer } from './PeerCountCellRenderer'
 import { CategoryCellRenderer } from './CategoryCellRenderer'
+import { TagsCellRenderer } from './TagsCellRenderer'
 import { CheckboxCellRenderer } from './CheckboxCellRenderer'
 import { PriorityCellRenderer } from './PriorityCellRenderer'
 
@@ -76,7 +77,7 @@ export const CELL_RENDERERS: Record<string, CellRenderer> = {
   category: new CategoryCellRenderer(),
 
   // 其他文本列 - 左对齐，支持溢出省略
-  tags: new TextCellRenderer({ ellipsis: true, align: 'left' }),
+  tags: new TagsCellRenderer(),
   tracker: new TextCellRenderer({ ellipsis: true, align: 'left' }),
   save_path: new TextCellRenderer({ ellipsis: true, align: 'left' }),
   content_path: new TextCellRenderer({ ellipsis: true, align: 'left' }),
@@ -112,5 +113,6 @@ export { PopularityCellRenderer } from './PopularityCellRenderer'
 export { AvailabilityCellRenderer } from './AvailabilityCellRenderer'
 export { PeerCountCellRenderer } from './PeerCountCellRenderer'
 export { CategoryCellRenderer } from './CategoryCellRenderer'
+export { TagsCellRenderer } from './TagsCellRenderer'
 export { CheckboxCellRenderer } from './CheckboxCellRenderer'
 export { PriorityCellRenderer } from './PriorityCellRenderer'
