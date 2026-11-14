@@ -234,14 +234,26 @@ export const isFilterTorrents = function (
 }
 
 // 排序
+// 种子数列展示的是「已连接 (群内总数)」。已连接经常全是 0，按它排序会退化成按名称。
+// 排序以群内总数为主，已连接数相同总数时再比较。
+const sortValue = (torrent: Torrent, key: string) => {
+  if (key === 'num_seeds') {
+    return torrent.num_complete ?? torrent.num_seeds ?? 0
+  }
+  if (key === 'num_leechs') {
+    return torrent.num_incomplete ?? torrent.num_leechs ?? 0
+  }
+  return torrent[key as keyof Torrent]
+}
+
 export const sortTorrents = function (
   filtered: Torrent[],
   sortKey: globalThis.Ref<string, string>,
   sortOrder: globalThis.Ref<string, string>
 ) {
   filtered.sort((a, b) => {
-    const aValue = a[sortKey.value as keyof Torrent]
-    const bValue = b[sortKey.value as keyof Torrent]
+    const aValue = sortValue(a, sortKey.value)
+    const bValue = sortValue(b, sortKey.value)
     // 处理 undefined/null
     if (aValue == null && bValue == null) {
       return 0
@@ -261,6 +273,16 @@ export const sortTorrents = function (
     }
     // 其他类型（如布尔、对象等）
     // result = 0 时，说明字段值相等，需要二次排序
+    if (result === 0 && sortKey.value === 'num_seeds') {
+      const aConnected = a.num_seeds || 0
+      const bConnected = b.num_seeds || 0
+      result = sortOrder.value === 'asc' ? aConnected - bConnected : bConnected - aConnected
+    }
+    if (result === 0 && sortKey.value === 'num_leechs') {
+      const aConnected = a.num_leechs || 0
+      const bConnected = b.num_leechs || 0
+      result = sortOrder.value === 'asc' ? aConnected - bConnected : bConnected - aConnected
+    }
     if (result === 0 && sortKey.value !== 'name') {
       const aName = a.name || ''
       const bName = b.name || ''
